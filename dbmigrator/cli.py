@@ -50,4 +50,7 @@ def main(argv=sys.argv[1:]):
         parser.print_help()
         return parser.error('command missing')
 
+    args['migrations_directory'] = os.path.relpath(
+        args['migrations_directory'])
+
     return args['cmmd'](**args)
