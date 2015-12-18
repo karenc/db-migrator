@@ -11,11 +11,14 @@ try:
 except ImportError:
     # python 2
     import ConfigParser as configparser
+import difflib
 import functools
 import glob
 import os
 import psycopg2
 import re
+import sys
+import subprocess
 
 
 def get_settings_from_config(filename, config_names, settings):
@@ -68,3 +71,46 @@ def get_migrations(migration_directory, import_modules=False):
                 yield version, migration_name, import_migration(path)
             else:
                 yield version, migration_name
+
+
+def get_schema_versions(cursor):
+    cursor.execute('SELECT * FROM schema_migrations ORDER BY version')
+    for i in cursor.fetchall():
+        yield i[0]
+
+
+def get_pending_migrations(migration_directory, cursor, import_modules=False,
+                           up_to_version=None):
+    migrated_versions = list(get_schema_versions(cursor))
+    if up_to_version and up_to_version in migrated_versions:
+        raise StopIteration
+    migrations = list(get_migrations(migration_directory, import_modules))
+    versions = [m[0] for m in migrations]
+    if up_to_version:
+        try:
+            migrations = migrations[:versions.index(up_to_version) + 1]
+        except ValueError:
+            raise Exception('Version "{}" not found'.format(up_to_version))
+    for migration in migrations:
+        version = migration[0]
+        if version not in migrated_versions:
+            yield migration
+
+
+def compare_schema(db_connection_string, callback, *args, **kwargs):
+    old_schema = subprocess.check_output(
+        ['pg_dump', '-s', db_connection_string]).decode('utf-8')
+    callback(*args, **kwargs)
+    new_schema = subprocess.check_output(
+        ['pg_dump', '-s', db_connection_string]).decode('utf-8')
+    print(''.join(list(
+        difflib.unified_diff(old_schema.splitlines(True),
+                             new_schema.splitlines(True),
+                             n=10))))
+
+
+def run_migration(cursor, version, migration_name, migration):
+    print('Running migration {} {}'.format(version, migration_name))
+    migration.up(cursor)
+    cursor.execute('INSERT INTO schema_migrations VALUES (%s)', (version,))
+    cursor.connection.commit()
