@@ -60,9 +60,9 @@ def import_migration(path):
     return module
 
 
-def get_migrations(migration_directory, import_modules=False):
+def get_migrations(migration_directory, import_modules=False, reverse=False):
     python_files = os.path.join(migration_directory, '*.py')
-    for path in sorted(glob.glob(python_files)):
+    for path in sorted(glob.glob(python_files), reverse=reverse):
         filename = os.path.basename(path)
         m = re.match('([0-9]+)_(.+).py$', filename)
         if m:
@@ -113,4 +113,12 @@ def run_migration(cursor, version, migration_name, migration):
     print('Running migration {} {}'.format(version, migration_name))
     migration.up(cursor)
     cursor.execute('INSERT INTO schema_migrations VALUES (%s)', (version,))
+    cursor.connection.commit()
+
+
+def rollback_migration(cursor, version, migration_name, migration):
+    print('Rolling back migration {} {}'.format(version, migration_name))
+    migration.down(cursor)
+    cursor.execute('DELETE FROM schema_migrations WHERE version = %s',
+                   (version,))
     cursor.connection.commit()
