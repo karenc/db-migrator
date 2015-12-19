@@ -1,0 +1,200 @@
+DB Migrator
+===========
+
+generate_migration
+------------------
+
+Example usage::
+
+    dbmigrator generate_migration add_id_to_users
+
+generates a file called ``migrations/20151217170514_add_id_to_users.py``
+with content::
+
+    def up(cursor):
+        # TODO migration code
+        pass
+
+    def down(cursor):
+        # TODO rollback code
+        pass
+
+
+init_schema_migrations
+----------------------
+
+Example usage::
+
+    dbmigrator --db-connection-string='postgres://dbuser@localhost/dbname' init_schema_migrations
+
+or with a config file, ``development.ini``, that looks like this::
+
+    [app:main]
+    db-connection-string = postgres://dbuser@localhost/dbname
+
+Run the command::
+
+    dbmigrator init_schema_migrations
+
+
+migrate
+-------
+
+Example usage:
+
+With two migrations in the migrations directory,
+
+``migrations/20151217170514_add_id_to_users.py``::
+
+    def up(cursor):
+        # TODO migration code
+        pass
+
+    def down(cursor):
+        # TODO rollback code
+        pass
+and
+
+``migrations/20151218145832_add_karen_to_users.py``::
+
+    def up(cursor):
+        cursor.execute('ALTER TABLE users ADD COLUMN karen TEXT')
+
+    def down(cursor):
+        cursor.execute('ALTER TABLE users DROP COLUMN karen')
+
+To run the migrations::
+
+    $ dbmigrator migrate
+    Running migration 20151217170514 add_id_to_users
+
+    Running migration 20151218145832 add_karen_to_users
+    ---
+    +++
+    @@ -4005,21 +4005,22 @@
+         first_name text,
+         firstname text,
+         last_name text,
+         surname text,
+         full_name text,
+         fullname text,
+         suffix text,
+         title text,
+         email text,
+         website text,
+    -    is_moderated boolean
+    +    is_moderated boolean,
+    +    karen text
+     );
+
+     ALTER TABLE public.users OWNER TO rhaptos;
+
+     --
+     -- Name: abstractid; Type: DEFAULT; Schema: public; Owner: rhaptos
+     --
+
+     ALTER TABLE ONLY abstracts ALTER COLUMN abstractid SET DEFAULT nextval('abstracts_abstractid_seq'::regclass);
+
+or to run migrations up to a specific version::
+
+    $ dbmigrator migrate version=20151217170514
+    Running migration 20151217170514 add_id_to_users
+
+if all migrations have already been run::
+
+    $ dbmigrator migrate
+    No pending migrations.  Database is up to date.
+
+rollback
+--------
+
+Example usage:
+
+With two migrations in the migrations directory,
+
+``migrations/20151217170514_add_id_to_users.py``::
+
+    def up(cursor):
+        # TODO migration code
+        pass
+
+    def down(cursor):
+        # TODO rollback code
+        pass
+
+and
+
+``migrations/20151218145832_add_karen_to_users.py``::
+
+    def up(cursor):
+        cursor.execute('ALTER TABLE users ADD COLUMN karen TEXT')
+
+    def down(cursor):
+        cursor.execute('ALTER TABLE users DROP COLUMN karen')
+
+Make sure the database is up to date::
+
+    $ dbmigrator migrate
+    No pending migrations.  Database is up to date.
+
+Now rollback the last migration::
+
+    $ dbmigrator rollback
+    Rolling back migration 20151218145832 add_karen_to_users
+    ---
+    +++
+    @@ -4005,22 +4005,21 @@
+         first_name text,
+         firstname text,
+         last_name text,
+         surname text,
+         full_name text,
+         fullname text,
+         suffix text,
+         title text,
+         email text,
+         website text,
+    -    is_moderated boolean,
+    -    karen text
+    +    is_moderated boolean
+     );
+
+     ALTER TABLE public.users OWNER TO rhaptos;
+
+     --
+     -- Name: abstractid; Type: DEFAULT; Schema: public; Owner: rhaptos
+     --
+
+     ALTER TABLE ONLY abstracts ALTER COLUMN abstractid SET DEFAULT nextval('abstracts_abstractid_seq'::regclass);
+
+To rollback the last 2 migrations::
+
+    $ dbmigrator rollback --steps=2
+    Rolling back migration 20151218145832 add_karen_to_users
+    ---
+    +++
+    @@ -4005,22 +4005,21 @@
+         first_name text,
+         firstname text,
+         last_name text,
+         surname text,
+         full_name text,
+         fullname text,
+         suffix text,
+         title text,
+         email text,
+         website text,
+    -    is_moderated boolean,
+    -    karen text
+    +    is_moderated boolean
+     );
+
+     ALTER TABLE public.users OWNER TO rhaptos;
+
+     --
+     -- Name: abstractid; Type: DEFAULT; Schema: public; Owner: rhaptos
+     --
+
+     ALTER TABLE ONLY abstracts ALTER COLUMN abstractid SET DEFAULT nextval('abstracts_abstractid_seq'::regclass);
+
+    Rolling back migration 20151217170514 add_id_to_users
