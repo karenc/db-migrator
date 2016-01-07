@@ -53,11 +53,10 @@ def with_cursor(func):
 
 def import_migration(path):
     dirname, basename = os.path.split(path)
-    package_name = dirname.replace('/', '.')
+    if dirname not in sys.path:
+        sys.path.append(dirname)
     module_name = basename.rsplit('.', 1)[0]
-    __import__(package_name, fromlist=[module_name])
-    module = sys.modules['{}.{}'.format(package_name, module_name)]
-    return module
+    return __import__(module_name)
 
 
 def get_migrations(migration_directory, import_modules=False, reverse=False):
