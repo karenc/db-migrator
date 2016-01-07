@@ -16,7 +16,8 @@ __all__ = ('cli_loader',)
 def cli_command(cursor, migrations_directory='', **kwargs):
     cursor.execute("""\
         CREATE TABLE IF NOT EXISTS schema_migrations (
-            version TEXT NOT NULL
+            version TEXT NOT NULL,
+            applied TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )""")
     cursor.execute("""\
         DELETE FROM schema_migrations""")
