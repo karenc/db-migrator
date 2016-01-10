@@ -15,10 +15,24 @@ import difflib
 import functools
 import glob
 import os
+import pkg_resources
 import psycopg2
 import re
 import sys
 import subprocess
+
+
+def get_settings_from_entry_points(settings):
+    for entry_point in pkg_resources.iter_entry_points(group=__package__):
+        setting_name = entry_point.name
+        if settings.get(setting_name):
+            # don't overwrite settings given from the CLI
+            continue
+
+        value = entry_point.load()
+        if callable(value):
+            value = value()
+        settings[setting_name] = value
 
 
 def get_settings_from_config(filename, config_names, settings):

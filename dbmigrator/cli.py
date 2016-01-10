@@ -41,6 +41,7 @@ def main(argv=sys.argv[1:]):
             'migrations-directory',
             'db-connection-string',
             ], args)
+    utils.get_settings_from_entry_points(args)
 
     for name, value in DEFAULTS.items():
         if not args.get(name):
