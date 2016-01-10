@@ -20,9 +20,6 @@ def cli_command(migration_name='', **kwargs):
     path = os.path.join(directory, filename)
     if not os.path.isdir(directory):
         os.makedirs(directory)
-    if not os.path.exists(os.path.join(directory, '__init__.py')):
-        with open(os.path.join(directory, '__init__.py'), 'w'):
-            pass
     with open(path, 'w') as f:
         f.write("""\
 # -*- coding: utf-8 -*-
