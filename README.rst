@@ -20,6 +20,33 @@ with content::
         pass
 
 
+To set the migrations directory using an entry point, in mymodule ``setup.py``::
+
+    setup(
+        ...
+        entry_points={
+            'dbmigrator': [
+                'migrations_directory = mymodule.main:migrations_directory',
+                ],
+            },
+        )
+
+Then in ``mymodule/main.py``::
+
+    import os
+
+    migrations_directory = '{}/sql/migrations'.format(
+        os.path.abspath(os.path.dirname(__file__)))
+
+or::
+
+    import os
+
+    def migrations_directory():
+        return '{}/sql/migrations'.format(
+            os.path.abspath(os.path.dirname(__file__)))
+
+
 init
 ----
 
