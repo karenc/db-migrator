@@ -1,12 +1,12 @@
 DB Migrator
 ===========
 
-generate_migration
-------------------
+generate
+--------
 
 Example usage::
 
-    dbmigrator generate_migration add_id_to_users
+    dbmigrator generate add_id_to_users
 
 generates a file called ``migrations/20151217170514_add_id_to_users.py``
 with content::
@@ -20,12 +20,12 @@ with content::
         pass
 
 
-init_schema_migrations
-----------------------
+init
+----
 
 Example usage::
 
-    dbmigrator --db-connection-string='postgres://dbuser@localhost/dbname' init_schema_migrations
+    dbmigrator --db-connection-string='postgres://dbuser@localhost/dbname' init
 
 or with a config file, ``development.ini``, that looks like this::
 
@@ -34,7 +34,7 @@ or with a config file, ``development.ini``, that looks like this::
 
 Run the command::
 
-    dbmigrator init_schema_migrations
+    dbmigrator init
 
 
 migrate
