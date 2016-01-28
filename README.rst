@@ -31,6 +31,10 @@ To set the migrations directory using an entry point, in mymodule ``setup.py``::
             },
         )
 
+**Important note**: For the settings from ``setup.py`` to be picked up, before
+running ``dbmigrator``, first run ``python setup.py develop`` or
+``python setup.py install``.
+
 Then in ``mymodule/main.py``::
 
     import os
