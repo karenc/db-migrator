@@ -68,6 +68,19 @@ Run the command::
     dbmigrator init
 
 
+list
+----
+
+Example usage::
+
+    $ dbmigrator list
+    name                      | is applied | date applied
+    ----------------------------------------------------------------------
+    20151217170514_add_id_to_   True         2016-01-31 00:15:01.692570+01:00
+    20151218145832_add_karen_   False               
+    20160107200351_blah         False               
+
+
 migrate
 -------
 

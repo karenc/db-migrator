@@ -86,10 +86,13 @@ def get_migrations(migration_directory, import_modules=False, reverse=False):
                 yield version, migration_name
 
 
-def get_schema_versions(cursor):
+def get_schema_versions(cursor, versions_only=True):
     cursor.execute('SELECT * FROM schema_migrations ORDER BY version')
     for i in cursor.fetchall():
-        yield i[0]
+        if versions_only:
+            yield i[0]
+        else:
+            yield i
 
 
 def get_pending_migrations(migration_directory, cursor, import_modules=False,
