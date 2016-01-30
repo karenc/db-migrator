@@ -34,6 +34,7 @@ def cli_command(cursor, migrations_directory='', version=None, **kwargs):
     cursor.executemany("""\
         INSERT INTO schema_migrations VALUES (%s)
         """, versions)
+    print('Schema migrations initialized.')
 
 
 def cli_loader(parser):
