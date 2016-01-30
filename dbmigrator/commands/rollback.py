@@ -16,6 +16,9 @@ __all__ = ('cli_loader',)
 def cli_command(cursor, migrations_directory='', steps=1,
                 db_connection_string='', **kwargs):
     migrated_versions = list(utils.get_schema_versions(cursor))
+    if not migrated_versions:
+        print('No migrations to roll back.')
+        return
     migrations = utils.get_migrations(
         migrations_directory, import_modules=True, reverse=True)
 
