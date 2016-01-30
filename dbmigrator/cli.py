@@ -14,10 +14,7 @@ from . import commands, utils
 
 
 DEFAULTS = {
-    'migrations_directory': 'migrations',
     }
-
-DEFAULT_CONFIG_PATH = 'development.ini'
 
 
 def main(argv=sys.argv[1:]):
@@ -25,7 +22,7 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--migrations-directory')
 
-    parser.add_argument('--config', default=DEFAULT_CONFIG_PATH)
+    parser.add_argument('--config')
 
     parser.add_argument('--db-connection-string',
                         help='a psycopg2 db connection string')
