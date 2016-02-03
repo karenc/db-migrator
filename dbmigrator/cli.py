@@ -33,7 +33,7 @@ def main(argv=sys.argv[1:]):
     args = parser.parse_args(argv)
     args = vars(args)
 
-    if os.path.exists(args['config']):
+    if args.get('config') and os.path.exists(args['config']):
         utils.get_settings_from_config(args['config'], [
             'migrations-directory',
             'db-connection-string',

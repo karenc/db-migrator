@@ -65,7 +65,7 @@ or with a config file, ``development.ini``, that looks like this::
 
 Run the command::
 
-    dbmigrator init
+    dbmigrator --config=development.ini init
 
 
 list
