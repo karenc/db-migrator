@@ -97,6 +97,7 @@ With two migrations in the migrations directory,
     def down(cursor):
         # TODO rollback code
         pass
+
 and
 
 ``migrations/20151218145832_add_karen_to_users.py``::
