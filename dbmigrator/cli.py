@@ -48,6 +48,10 @@ def main(argv=sys.argv[1:]):
         parser.print_help()
         return parser.error('command missing')
 
+    if not args.get('migrations_directory'):
+        parser.print_help()
+        return parser.error('migrations directory undefined')
+
     args['migrations_directory'] = os.path.relpath(
         args['migrations_directory'])
 
