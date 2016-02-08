@@ -25,7 +25,7 @@ setup(
     author='Connexions',
     author_email='info@cnx.org',
     url='https://github.com/karenc/db-migrator',
-    license='LGPL, see also LICENSE.txt',
+    license='AGPL, see also LICENSE.txt',
     description='Python package to migrate postgresql database',
     long_description=LONG_DESC,
     packages=find_packages(),
