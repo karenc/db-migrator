@@ -16,8 +16,8 @@ install_requires = (
 tests_require = [
     ]
 
-LONG_DESC = '\n\n~~~\n\n'.join([open('README.rst').read(),
-                                open('CHANGELOG.rst').read()])
+LONG_DESC = '\n\n~~~~\n\n'.join([open('README.rst').read(),
+                                 open('CHANGELOG.rst').read()])
 
 setup(
     name='db-migrator',
