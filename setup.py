@@ -16,6 +16,9 @@ install_requires = (
 tests_require = [
     ]
 
+LONG_DESC = '\n\n~~~\n\n'.join([open('README.rst').read(),
+                                open('CHANGELOG.rst').read()])
+
 setup(
     name='db-migrator',
     version='0.0.3',
@@ -24,7 +27,7 @@ setup(
     url='https://github.com/karenc/db-migrator',
     license='LGPL, see also LICENSE.txt',
     description='Python package to migrate postgresql database',
-    long_description=open('README.rst').read(),
+    long_description=LONG_DESC,
     packages=find_packages(),
     install_requires=install_requires,
     tests_require=tests_require,
