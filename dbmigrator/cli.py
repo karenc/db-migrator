@@ -9,6 +9,7 @@
 import argparse
 import os
 import sys
+import warnings
 
 from . import commands, utils
 
@@ -48,11 +49,10 @@ def main(argv=sys.argv[1:]):
         parser.print_help()
         return parser.error('command missing')
 
-    if not args.get('migrations_directory'):
-        parser.print_help()
-        return parser.error('migrations directory undefined')
-
-    args['migrations_directory'] = os.path.relpath(
-        args['migrations_directory'])
+    if args.get('migrations_directory'):
+        args['migrations_directory'] = os.path.relpath(
+            args['migrations_directory'])
+    else:
+        warnings.warn('migrations directory undefined')
 
     return args['cmmd'](**args)

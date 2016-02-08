@@ -17,6 +17,8 @@ def cli_command(migration_name='', **kwargs):
     timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     filename = '{}_{}.py'.format(timestamp, migration_name)
     directory = kwargs['migrations_directory']
+    if not directory:
+        raise Exception('migrations directory undefined')
     path = os.path.join(directory, filename)
     if not os.path.isdir(directory):
         os.makedirs(directory)
