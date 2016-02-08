@@ -18,7 +18,7 @@ tests_require = [
 
 setup(
     name='db-migrator',
-    version='0.0.2',
+    version='0.0.3',
     author='Connexions',
     author_email='info@cnx.org',
     url='https://github.com/karenc/db-migrator',
