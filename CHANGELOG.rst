@@ -1,6 +1,11 @@
 CHANGELOG
 ---------
 
+0.0.5 (2016-02-08)
+------------------
+
+ - Include CHANGELOG in distribution's manifest
+
 0.0.4 (2016-02-08)
 ------------------
 
