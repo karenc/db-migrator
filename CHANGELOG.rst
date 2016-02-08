@@ -1,6 +1,12 @@
 CHANGELOG
 ---------
 
+0.0.4 (2016-02-08)
+------------------
+
+ - Show warning message instead of error if migrations directory is undefined
+ - Add CHANGELOG
+
 0.0.3 (2016-02-08)
 ------------------
 
