@@ -1,6 +1,11 @@
 CHANGELOG
 ---------
 
+0.0.6 (2016-02-08)
+------------------
+
+ - Fix missing migrations directory the "init" command
+
 0.0.5 (2016-02-08)
 ------------------
 
