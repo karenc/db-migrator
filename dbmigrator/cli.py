@@ -5,11 +5,10 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-
+from __future__ import print_function
 import argparse
 import os
 import sys
-import warnings
 
 from . import commands, utils
 
@@ -53,6 +52,6 @@ def main(argv=sys.argv[1:]):
         args['migrations_directory'] = os.path.relpath(
             args['migrations_directory'])
     else:
-        warnings.warn('migrations directory undefined')
+        print('migrations directory undefined', file=sys.stderr)
 
     return args['cmmd'](**args)
