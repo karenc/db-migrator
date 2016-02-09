@@ -20,7 +20,8 @@ DEFAULTS = {
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='DB Migrator')
 
-    parser.add_argument('--migrations-directory')
+    parser.add_argument('--migrations-directory',
+                        default='')
 
     parser.add_argument('--config')
 
