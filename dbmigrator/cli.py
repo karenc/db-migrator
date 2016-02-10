@@ -28,6 +28,10 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--db-connection-string',
                         help='a psycopg2 db connection string')
 
+    parser.add_argument(
+        '--context',
+        help='Name of the python package containing the migrations')
+
     subparsers = parser.add_subparsers(help='commands')
     commands.load_cli(subparsers)
 
@@ -41,7 +45,13 @@ def main(argv=sys.argv[1:]):
             'migrations-directory',
             'db-connection-string',
             ], args)
-    utils.get_settings_from_entry_points(args)
+
+    if not args.get('context'):
+        args['context'] = os.path.basename(os.path.abspath(os.path.curdir))
+        print('context undefined, using current directory name "{}"'
+              .format(args['context']),
+              file=sys.stderr)
+    utils.get_settings_from_entry_points(args, args['context'])
 
     for name, value in DEFAULTS.items():
         if not args.get(name):
