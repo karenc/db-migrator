@@ -34,7 +34,9 @@ def main(argv=sys.argv[1:]):
     args = parser.parse_args(argv)
     args = vars(args)
 
-    if args.get('config') and os.path.exists(args['config']):
+    if args.get('config'):
+        if not os.path.exists(args['config']):
+            raise Exception('config file not found')
         utils.get_settings_from_config(args['config'], [
             'migrations-directory',
             'db-connection-string',
