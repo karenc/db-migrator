@@ -22,8 +22,10 @@ import sys
 import subprocess
 
 
-def get_settings_from_entry_points(settings):
-    for entry_point in pkg_resources.iter_entry_points(group=__package__):
+def get_settings_from_entry_points(settings, context):
+    entry_points = pkg_resources.get_entry_map(
+        context, __package__).values()
+    for entry_point in entry_points:
         setting_name = entry_point.name
         if settings.get(setting_name):
             # don't overwrite settings given from the CLI
