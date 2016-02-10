@@ -1,6 +1,12 @@
 CHANGELOG
 ---------
 
+0.0.7 (2016-02-10)
+------------------
+
+ - Add option ``--context`` to dbmigrator in order to load entry points
+ - Raise error if config file is specified but not found
+
 0.0.6 (2016-02-08)
 ------------------
 
