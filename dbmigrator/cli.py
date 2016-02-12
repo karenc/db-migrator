@@ -10,6 +10,8 @@ import argparse
 import os
 import sys
 
+import pkg_resources
+
 from . import commands, utils
 
 
@@ -32,11 +34,17 @@ def main(argv=sys.argv[1:]):
         '--context',
         help='Name of the python package containing the migrations')
 
+    parser.add_argument('--version', action='store_true')
+
     subparsers = parser.add_subparsers(help='commands')
     commands.load_cli(subparsers)
 
     args = parser.parse_args(argv)
     args = vars(args)
+
+    if args.get('version'):
+        print(pkg_resources.require('db-migrator')[0].version)
+        return
 
     if args.get('config'):
         if not os.path.exists(args['config']):
