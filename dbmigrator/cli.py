@@ -22,6 +22,8 @@ DEFAULTS = {
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='DB Migrator')
 
+    parser.add_argument('--verbose', '-v', action='store_true')
+
     parser.add_argument('--migrations-directory',
                         default='')
 
@@ -74,5 +76,8 @@ def main(argv=sys.argv[1:]):
             args['migrations_directory'])
     else:
         print('migrations directory undefined', file=sys.stderr)
+
+    if args.get('verbose'):
+        print('args: {}'.format(args))
 
     return args['cmmd'](**args)
