@@ -6,8 +6,6 @@
 # See LICENCE.txt for details.
 # ###
 
-import datetime
-
 from .. import utils
 
 
@@ -25,7 +23,7 @@ def cli_command(cursor, migrations_directory='', version=None, **kwargs):
         DELETE FROM schema_migrations""")
     versions = []
     if version is None:
-        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        timestamp = utils.timestamp()
     else:
         timestamp = str(version)
     for version, name in utils.get_migrations(migrations_directory):
