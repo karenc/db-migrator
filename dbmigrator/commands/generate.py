@@ -6,16 +6,16 @@
 # See LICENCE.txt for details.
 # ###
 
-import datetime
 import os
+
+from ..utils import timestamp
 
 
 __all__ = ('cli_loader',)
 
 
 def cli_command(migration_name='', **kwargs):
-    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    filename = '{}_{}.py'.format(timestamp, migration_name)
+    filename = '{}_{}.py'.format(timestamp(), migration_name)
     directory = kwargs['migrations_directory']
     if not directory:
         raise Exception('migrations directory undefined')

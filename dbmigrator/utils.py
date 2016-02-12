@@ -11,6 +11,7 @@ try:
 except ImportError:
     # python 2
     import ConfigParser as configparser
+import datetime
 import difflib
 import functools
 import glob
@@ -140,3 +141,8 @@ def rollback_migration(cursor, version, migration_name, migration):
     cursor.execute('DELETE FROM schema_migrations WHERE version = %s',
                    (version,))
     cursor.connection.commit()
+
+
+def timestamp():
+    now = datetime.datetime.utcnow()
+    return now.strftime('%Y%m%d%H%M%S')
