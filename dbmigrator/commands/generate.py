@@ -19,6 +19,8 @@ def cli_command(migration_name='', **kwargs):
     directory = kwargs['migrations_directory']
     if not directory:
         raise Exception('migrations directory undefined')
+    if len(directory) > 1:
+        raise Exception('more than one migrations directory specified')
     path = os.path.join(directory, filename)
     if not os.path.isdir(directory):
         os.makedirs(directory)

@@ -23,19 +23,33 @@ import sys
 import subprocess
 
 
-def get_settings_from_entry_points(settings, context):
-    entry_points = pkg_resources.get_entry_map(
-        context, __package__).values()
-    for entry_point in entry_points:
-        setting_name = entry_point.name
-        if settings.get(setting_name):
-            # don't overwrite settings given from the CLI
-            continue
+def get_settings_from_entry_points(settings, contexts):
+    context_settings = {}
 
-        value = entry_point.load()
-        if callable(value):
-            value = value()
-        settings[setting_name] = value
+    for context in contexts:
+        entry_points = pkg_resources.get_entry_map(
+            context, __package__).values()
+        for entry_point in entry_points:
+            setting_name = entry_point.name
+            if settings.get(setting_name):
+                # don't overwrite settings given from the CLI
+                continue
+
+            value = entry_point.load()
+            if callable(value):
+                value = value()
+
+            old_value = context_settings.get(setting_name)
+            if (old_value and old_value != value or
+                    isinstance(old_value, list) and value not in old_value):
+                if not isinstance(old_value, list):
+                    context_settings[setting_name] = [old_value]
+                context_settings[setting_name].append(value)
+            else:
+                context_settings[setting_name] = value
+
+    for name, value in context_settings.items():
+        settings[name] = value
 
 
 def get_settings_from_config(filename, config_names, settings):
@@ -76,9 +90,12 @@ def import_migration(path):
     return __import__(module_name)
 
 
-def get_migrations(migration_directory, import_modules=False, reverse=False):
-    python_files = os.path.join(migration_directory, '*.py')
-    for path in sorted(glob.glob(python_files), reverse=reverse):
+def get_migrations(migration_directories, import_modules=False, reverse=False):
+    paths = [os.path.join(md, '*.py') for md in migration_directories]
+    python_files = functools.reduce(
+        lambda a, b: a + b,
+        [glob.glob(path) for path in paths])
+    for path in sorted(python_files, reverse=reverse):
         filename = os.path.basename(path)
         m = re.match('([0-9]+)_(.+).py$', filename)
         if m:
@@ -98,12 +115,12 @@ def get_schema_versions(cursor, versions_only=True):
             yield i
 
 
-def get_pending_migrations(migration_directory, cursor, import_modules=False,
+def get_pending_migrations(migration_directories, cursor, import_modules=False,
                            up_to_version=None):
     migrated_versions = list(get_schema_versions(cursor))
     if up_to_version and up_to_version in migrated_versions:
         raise StopIteration
-    migrations = list(get_migrations(migration_directory, import_modules))
+    migrations = list(get_migrations(migration_directories, import_modules))
     versions = [m[0] for m in migrations]
     if up_to_version:
         try:

@@ -25,7 +25,8 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--verbose', '-v', action='store_true')
 
     parser.add_argument('--migrations-directory',
-                        default='')
+                        action='append',
+                        default=[])
 
     parser.add_argument('--config')
 
@@ -34,6 +35,8 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument(
         '--context',
+        action='append',
+        default=[],
         help='Name of the python package containing the migrations')
 
     parser.add_argument('--version', action='store_true')
@@ -56,7 +59,7 @@ def main(argv=sys.argv[1:]):
             'db-connection-string',
             ], args)
 
-    if not args.get('context'):
+    if not args.get('context') and not args.get('migrations_directory'):
         args['context'] = os.path.basename(os.path.abspath(os.path.curdir))
         print('context undefined, using current directory name "{}"'
               .format(args['context']),
@@ -72,8 +75,10 @@ def main(argv=sys.argv[1:]):
         return parser.error('command missing')
 
     if args.get('migrations_directory'):
-        args['migrations_directory'] = os.path.relpath(
-            args['migrations_directory'])
+        if not isinstance(args['migrations_directory'], list):
+            args['migrations_directory'] = [args['migrations_directory']]
+        args['migrations_directory'] = [
+            os.path.relpath(md) for md in args['migrations_directory']]
     else:
         print('migrations directory undefined', file=sys.stderr)
 
