@@ -1,6 +1,14 @@
 CHANGELOG
 ---------
 
+0.1.0 (2016-02-12)
+------------------
+
+ - Allow multiple migrations directories / context to be specified
+ - Add --verbose which prints the configuration used by dbmigrator
+ - Use datetime ``utcnow`` instead of ``now`` for timestamps
+ - Add ``--version`` to show the version of db-migrator installed
+
 0.0.7 (2016-02-10)
 ------------------
 
