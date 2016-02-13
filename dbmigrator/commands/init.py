@@ -15,12 +15,18 @@ __all__ = ('cli_loader',)
 @utils.with_cursor
 def cli_command(cursor, migrations_directory='', version=None, **kwargs):
     cursor.execute("""\
-        CREATE TABLE IF NOT EXISTS schema_migrations (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_name = 'schema_migrations'""")
+    table_exists = cursor.fetchone()
+    if table_exists:
+        print('Schema migrations already initialized.')
+        return
+
+    cursor.execute("""\
+        CREATE TABLE schema_migrations (
             version TEXT NOT NULL,
             applied TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )""")
-    cursor.execute("""\
-        DELETE FROM schema_migrations""")
     versions = []
     if version is None:
         timestamp = utils.timestamp()
