@@ -8,7 +8,20 @@
 
 from contextlib import contextmanager
 from io import StringIO
+import os.path
 import sys
+
+import pip
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+db_connection_string = 'dbname=travis user=travis host=localhost'
+test_data_path = os.path.join(here, 'data')
+test_packages = ['package-a', 'package-b']
+test_migrations_directories = [
+    os.path.join(test_data_path, 'package-a', 'package_a', 'migrations'),
+    os.path.join(test_data_path, 'package-b', 'package_b', 'm'),
+    ]
 
 
 # noqa from http://stackoverflow.com/questions/4219717/how-to-assert-output-with-nosetest-unittest-in-python
@@ -25,3 +38,10 @@ def captured_output():
         yield sys.stdout, sys.stderr
     finally:
         sys.stdout, sys.stderr = old_out, old_err
+
+
+def install_test_packages(packages=None):
+    if packages is None:
+        packages = test_packages
+    for package in packages:
+        pip.main(['install', '-e', os.path.join(test_data_path, package)])

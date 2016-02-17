@@ -5,3 +5,9 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+
+import os.path
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+find_migrations_directory = os.path.join(here, 'm')
