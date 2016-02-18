@@ -31,6 +31,7 @@ setup(
     packages=find_packages(),
     install_requires=install_requires,
     tests_require=tests_require,
+    test_suite='dbmigrator.tests',
     include_package_data=True,
     entry_points={
         'console_scripts': [
