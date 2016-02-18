@@ -57,7 +57,7 @@ def main(argv=sys.argv[1:]):
             ], args)
 
     if not args.get('context') and not args.get('migrations_directory'):
-        args['context'] = os.path.basename(os.path.abspath(os.path.curdir))
+        args['context'] = [os.path.basename(os.path.abspath(os.path.curdir))]
         print('context undefined, using current directory name "{}"'
               .format(args['context']),
               file=sys.stderr)
