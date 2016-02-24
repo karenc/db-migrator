@@ -21,7 +21,7 @@ LONG_DESC = '\n\n~~~~\n\n'.join([open('README.rst').read(),
 
 setup(
     name='db-migrator',
-    version='0.1.0',
+    version='0.1.1',
     author='Connexions',
     author_email='info@cnx.org',
     url='https://github.com/karenc/db-migrator',

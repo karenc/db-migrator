@@ -1,6 +1,15 @@
 CHANGELOG
 ---------
 
+0.1.1 (2016-02-24)
+------------------
+
+ - Stop changing schema_migrations data if the table already exists
+ - Rewrite ``--version`` to use argparse version action
+ - Add unit test for ``--version``
+ - Add travis CI configuration file
+ - Fix default context (working directory) being a string instead of a list
+
 0.1.0 (2016-02-12)
 ------------------
 
