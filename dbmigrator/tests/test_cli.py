@@ -20,7 +20,7 @@ class MainTestCase(unittest.TestCase):
 
         version = pkg_resources.get_distribution('db-migrator').version
         with captured_output() as (out, err):
-            self.assertRaises(SystemExit, main, ['--version'])
+            self.assertRaises(SystemExit, main, ['-V'])
 
         stdout = out.getvalue()
         stderr = err.getvalue()
