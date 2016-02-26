@@ -95,7 +95,9 @@ def get_migrations(migration_directories, import_modules=False, reverse=False):
     python_files = functools.reduce(
         lambda a, b: a + b,
         [glob.glob(path) for path in paths])
-    for path in sorted(python_files, reverse=reverse):
+    for path in sorted(python_files,
+                       key=lambda path: os.path.basename(path),
+                       reverse=reverse):
         filename = os.path.basename(path)
         m = re.match('([0-9]+)_(.+).py$', filename)
         if m:
