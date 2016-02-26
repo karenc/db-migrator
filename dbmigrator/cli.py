@@ -40,7 +40,8 @@ def main(argv=sys.argv[1:]):
         help='Name of the python package containing the migrations')
 
     version = pkg_resources.require('db-migrator')[0].version
-    parser.add_argument('--version', action='version', version=version)
+    parser.add_argument('-V', action='version', version=version,
+                        help='Show version information')
 
     subparsers = parser.add_subparsers(help='commands')
     commands.load_cli(subparsers)
