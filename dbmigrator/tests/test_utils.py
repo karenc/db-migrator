@@ -15,6 +15,11 @@ from . import testing
 
 
 class UtilsTestCase(unittest.TestCase):
+    def tearDown(self):
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute('DROP TABLE IF EXISTS a_table')
+
     def test_get_settings_from_entry_points(self):
         from ..utils import get_settings_from_entry_points
 
@@ -75,3 +80,43 @@ class UtilsTestCase(unittest.TestCase):
             func('')
 
         self.assertEqual(str(cm.exception), 'db-connection-string missing')
+
+    def test_import_migration(self):
+        from ..utils import import_migration
+
+        migration_path = os.path.join(
+            testing.test_data_path, 'package-a', 'package_a', 'migrations',
+            '20160228202637_add_table.py')
+
+        migration = import_migration(migration_path)
+        self.assertIn('up', dir(migration))
+        self.assertIn('down', dir(migration))
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                try:
+                    cursor.execute('SELECT * FROM a_table')
+                    self.fail('a_table should not be in the database before '
+                              'the migration is run')
+                except psycopg2.ProgrammingError as e:
+                    self.assertIn('relation "a_table" does not exist', str(e))
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                # Run the migration.
+                migration.up(cursor)
+
+                # Try accessing a_table created by the migration.
+                cursor.execute('SELECT * FROM a_table')
+
+                # Roll back the migration.
+                migration.down(cursor)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                try:
+                    cursor.execute('SELECT * FROM a_table')
+                    self.fail('a_table should not be in the database after '
+                              'the migration is rolled back')
+                except psycopg2.ProgrammingError as e:
+                    self.assertIn('relation "a_table" does not exist', str(e))
