@@ -9,6 +9,8 @@
 import os.path
 import unittest
 
+import psycopg2
+
 from . import testing
 
 
@@ -48,3 +50,28 @@ class UtilsTestCase(unittest.TestCase):
             {'db_connection_string':
                 'dbname=people user=test host=db.example.org',
              'migrations_directory': '/tmp/'})
+
+    def test_with_cursor(self):
+        from ..utils import with_cursor
+
+        self.called = False
+
+        @with_cursor
+        def func(cursor, arg_1, kwarg_1='kwarg_1', kwarg_2='kwarg_2',
+                 db_connection_string=None):
+            self.assertTrue(isinstance(cursor, psycopg2.extensions.cursor))
+            self.assertEqual(arg_1, 'arg_1')
+            self.assertEqual(kwarg_1, 'called')
+            self.assertEqual(kwarg_2, 'kwarg_2')
+            self.assertEqual(
+                db_connection_string, testing.db_connection_string)
+            self.called = True
+
+        func('arg_1', kwarg_1='called',
+             db_connection_string=testing.db_connection_string)
+        self.assertTrue(self.called)
+
+        with self.assertRaises(Exception) as cm:
+            func('')
+
+        self.assertEqual(str(cm.exception), 'db-connection-string missing')
