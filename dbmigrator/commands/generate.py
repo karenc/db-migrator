@@ -29,6 +29,7 @@ def cli_command(migration_name='', **kwargs):
         f.write("""\
 # -*- coding: utf-8 -*-
 
+
 def up(cursor):
     # TODO migration code
     pass
