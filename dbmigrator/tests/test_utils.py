@@ -6,8 +6,13 @@
 # See LICENCE.txt for details.
 # ###
 
+import datetime
 import os.path
 import unittest
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import psycopg2
 
@@ -203,3 +208,12 @@ CREATE TABLE schema_migrations (
             stdout, 'Rolling back migration {} {}\n'.format(version, name))
 
         self.assertIn((version, name), after_migrations)
+
+    def test_timestamp(self):
+        from ..utils import timestamp
+
+        now = datetime.datetime(2016, 2, 28, 22, 51, 56)
+
+        with mock.patch('datetime.datetime') as mock_datetime:
+            mock_datetime.utcnow.return_value = now
+            self.assertEqual(timestamp(), '20160228225156')
