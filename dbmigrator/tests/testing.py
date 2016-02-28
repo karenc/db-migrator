@@ -18,6 +18,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 db_connection_string = 'dbname=travis user=travis host=localhost'
 test_data_path = os.path.join(here, 'data')
 test_packages = ['package-a', 'package-b']
+test_config_path = os.path.join(test_data_path, 'config.ini')
 test_migrations_directories = [
     os.path.join(test_data_path, 'package-a', 'package_a', 'migrations'),
     os.path.join(test_data_path, 'package-b', 'package_b', 'm'),

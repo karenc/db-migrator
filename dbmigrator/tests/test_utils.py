@@ -30,3 +30,21 @@ class UtilsTestCase(unittest.TestCase):
             {'migrations_directory': testing.test_migrations_directories,
              'db_connection_string': testing.db_connection_string,
              })
+
+    def test_get_settings_from_config(self):
+        from ..utils import get_settings_from_config
+
+        settings = {
+            'migrations_directory': '/tmp/',
+            }
+
+        get_settings_from_config(
+            testing.test_config_path,
+            ['db-connection-string', 'migrations-directory', 'does-not-exist'],
+            settings)
+
+        self.assertEqual(
+            settings,
+            {'db_connection_string':
+                'dbname=people user=test host=db.example.org',
+             'migrations_directory': '/tmp/'})
