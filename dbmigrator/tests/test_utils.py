@@ -120,3 +120,14 @@ class UtilsTestCase(unittest.TestCase):
                               'the migration is rolled back')
                 except psycopg2.ProgrammingError as e:
                     self.assertIn('relation "a_table" does not exist', str(e))
+
+    def test_get_migrations(self):
+        from ..utils import get_migrations
+
+        migrations = get_migrations(testing.test_migrations_directories)
+
+        self.assertEqual(
+            list(migrations),
+            [('20160228202637', 'add_table'),
+             ('20160228210326', 'initial_data'),
+             ('20160228212456', 'cool_stuff')])
