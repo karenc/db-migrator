@@ -154,3 +154,26 @@ CREATE TABLE schema_migrations (
             ('20160228202637', 'add_table'),
             ('20160228210326', 'initial_data'),
             ('20160228212456', 'cool_stuff')])
+
+    def test_run_migration(self):
+        from ..utils import run_migration, get_pending_migrations
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                migrations = list(get_pending_migrations(
+                    testing.test_migrations_directories, cursor,
+                    import_modules=True))
+                version, name, migration = list(migrations)[0]
+
+                with testing.captured_output() as (out, err):
+                    run_migration(cursor, version, name, migration)
+
+                after_migrations = list(get_pending_migrations(
+                    testing.test_migrations_directories, cursor))
+
+        stdout = out.getvalue()
+
+        self.assertEqual(
+            stdout, 'Running migration {} {}\n'.format(version, name))
+
+        self.assertNotIn((version, name), after_migrations)
