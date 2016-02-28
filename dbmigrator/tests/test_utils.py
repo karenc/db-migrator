@@ -15,10 +15,20 @@ from . import testing
 
 
 class UtilsTestCase(unittest.TestCase):
+    def setUp(self):
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute("""
+CREATE TABLE schema_migrations (
+    version TEXT NOT NULL,
+    applied TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+)""")
+
     def tearDown(self):
         with psycopg2.connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('DROP TABLE IF EXISTS a_table')
+                cursor.execute('DROP TABLE IF EXISTS schema_migrations')
 
     def test_get_settings_from_entry_points(self):
         from ..utils import get_settings_from_entry_points
@@ -131,3 +141,16 @@ class UtilsTestCase(unittest.TestCase):
             [('20160228202637', 'add_table'),
              ('20160228210326', 'initial_data'),
              ('20160228212456', 'cool_stuff')])
+
+    def test_get_pending_migrations(self):
+        from ..utils import get_pending_migrations
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                migrations = list(get_pending_migrations(
+                    testing.test_migrations_directories, cursor))
+
+        self.assertEqual(migrations, [
+            ('20160228202637', 'add_table'),
+            ('20160228210326', 'initial_data'),
+            ('20160228212456', 'cool_stuff')])
