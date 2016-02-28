@@ -177,3 +177,29 @@ CREATE TABLE schema_migrations (
             stdout, 'Running migration {} {}\n'.format(version, name))
 
         self.assertNotIn((version, name), after_migrations)
+
+    def test_rollback_migration(self):
+        from ..utils import (
+            rollback_migration, run_migration, get_pending_migrations)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                migrations = list(get_pending_migrations(
+                    testing.test_migrations_directories, cursor,
+                    import_modules=True))
+                version, name, migration = list(migrations)[0]
+
+                run_migration(cursor, version, name, migration)
+
+                with testing.captured_output() as (out, err):
+                    rollback_migration(cursor, version, name, migration)
+
+                after_migrations = list(get_pending_migrations(
+                    testing.test_migrations_directories, cursor))
+
+        stdout = out.getvalue()
+
+        self.assertEqual(
+            stdout, 'Rolling back migration {} {}\n'.format(version, name))
+
+        self.assertIn((version, name), after_migrations)
