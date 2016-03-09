@@ -16,6 +16,9 @@ install_requires = (
 tests_require = [
     ]
 
+if sys.version_info.major < 3:
+    tests_require.append('mock')
+
 LONG_DESC = '\n\n~~~~\n\n'.join([open('README.rst').read(),
                                  open('CHANGELOG.rst').read()])
 

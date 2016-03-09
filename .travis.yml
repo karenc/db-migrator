@@ -8,8 +8,11 @@ before_install:
   # Install the coverage utility and coveralls reporting utility
   - pip install coverage
   - pip install coveralls
+  - pip install pep8
 install:
   - pip install .
+before_script:
+  - pep8 dbmigrator
 script:
   # This is the same as `python setup.py test` with a coverage wrapper.
   - coverage run --source=dbmigrator setup.py test

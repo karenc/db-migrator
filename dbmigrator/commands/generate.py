@@ -21,12 +21,14 @@ def cli_command(migration_name='', **kwargs):
         raise Exception('migrations directory undefined')
     if len(directory) > 1:
         raise Exception('more than one migrations directory specified')
+    directory = directory[0]
     path = os.path.join(directory, filename)
     if not os.path.isdir(directory):
         os.makedirs(directory)
     with open(path, 'w') as f:
         f.write("""\
 # -*- coding: utf-8 -*-
+
 
 def up(cursor):
     # TODO migration code
