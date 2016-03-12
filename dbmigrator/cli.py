@@ -7,12 +7,13 @@
 # ###
 from __future__ import print_function
 import argparse
+import logging
 import os
 import sys
 
 import pkg_resources
 
-from . import commands, utils
+from . import commands, utils, logger
 
 
 DEFAULTS = {
@@ -81,6 +82,8 @@ def main(argv=sys.argv[1:]):
         print('migrations directory undefined', file=sys.stderr)
 
     if args.get('verbose'):
-        print('args: {}'.format(args))
+        logger.setLevel(logging.DEBUG)
+
+    logger.debug('args: {}'.format(args))
 
     return args['cmmd'](**args)

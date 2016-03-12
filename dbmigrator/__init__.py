@@ -10,3 +10,6 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(logging.Formatter(
     '[%(levelname)s] %(name)s (%(filename)s) - %(message)s'))
 logger.addHandler(handler)
+
+
+__all__ = ('logger',)
