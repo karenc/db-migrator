@@ -67,8 +67,7 @@ CREATE TABLE schema_migrations (
 
         self.assertEqual(
             settings,
-            {'db_connection_string':
-                'dbname=people user=test host=db.example.org',
+            {'db_connection_string': testing.db_connection_string,
              'migrations_directory': '/tmp/'})
 
     def test_with_cursor(self):
