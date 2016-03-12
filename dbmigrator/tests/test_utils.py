@@ -147,6 +147,13 @@ CREATE TABLE schema_migrations (
              ('20160228210326', 'initial_data'),
              ('20160228212456', 'cool_stuff')])
 
+    def test_get_migrations_no_migrations_directories(self):
+        from ..utils import get_migrations
+
+        migrations = get_migrations([])
+
+        self.assertEqual(list(migrations), [])
+
     def test_get_pending_migrations(self):
         from ..utils import get_pending_migrations
 
