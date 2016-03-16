@@ -16,7 +16,8 @@ __all__ = ('cli_loader',)
 def cli_command(cursor, migrations_directory='', db_connection_string='',
                 **kwargs):
     migrated_versions = dict(list(
-        utils.get_schema_versions(cursor, versions_only=False)))
+        utils.get_schema_versions(cursor, versions_only=False,
+                                  raise_error=False)))
     migrations = utils.get_migrations(migrations_directory)
 
     print('{:<25} | is applied | date applied'.format('name'))
