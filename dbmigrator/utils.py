@@ -96,7 +96,7 @@ def get_migrations(migration_directories, import_modules=False, reverse=False):
     paths = [os.path.join(md, '*.py') for md in migration_directories]
     python_files = functools.reduce(
         lambda a, b: a + b,
-        [glob.glob(path) for path in paths])
+        [glob.glob(path) for path in paths], [])
     for path in sorted(python_files,
                        key=lambda path: os.path.basename(path),
                        reverse=reverse):
