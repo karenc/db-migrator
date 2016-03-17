@@ -15,13 +15,15 @@ import psycopg2
 from . import testing
 
 
-class MainTestCase(unittest.TestCase):
+class BaseTestCase(unittest.TestCase):
     def tearDown(self):
         with psycopg2.connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('DROP TABLE IF EXISTS schema_migrations')
 
-    def test_version(self):
+
+class VersionTestCase(BaseTestCase):
+    def test(self):
         from ..cli import main
 
         version = pkg_resources.get_distribution('db-migrator').version
@@ -37,7 +39,9 @@ class MainTestCase(unittest.TestCase):
             self.assertEqual(stdout, '')
             self.assertEqual(stderr.strip(), version)
 
-    def test_list_no_migrations_directory(self):
+
+class ListTestCase(BaseTestCase):
+    def test_no_migrations_directory(self):
         from ..cli import main
 
         cmd = ['--db-connection-string', testing.db_connection_string]
