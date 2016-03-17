@@ -81,3 +81,45 @@ name                      | is applied | date applied
         self.assertEqual(stderr, """\
 context undefined, using current directory name "['db-migrator']"
 migrations directory undefined\n""")
+
+    @mock.patch('dbmigrator.logger.warning')
+    def test_no_table(self, warning):
+        from ..cli import main
+
+        cmd = ['--config', testing.test_config_path]
+        with testing.captured_output() as (out, err):
+            main(cmd + ['list'])
+
+        stdout = out.getvalue()
+        stderr = err.getvalue()
+
+        self.assertEqual("""\
+name                      | is applied | date applied
+----------------------------------------------------------------------\n""",
+                         stdout)
+
+        warning.assert_called_with('You may need to run "dbmigrator init" '
+                                   'to create the schema_migrations table')
+        self.assertEqual('', stderr)
+
+    def test(self):
+        from ..cli import main
+
+        testing.install_test_packages()
+
+        cmd = ['--db-connection-string', testing.db_connection_string]
+        main(cmd + ['init'])
+        with testing.captured_output() as (out, err):
+            main(cmd + ['-v', '--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        stderr = err.getvalue()
+
+        self.assertEqual("""\
+name                      | is applied | date applied
+----------------------------------------------------------------------
+20160228202637_add_table    False        \
+
+20160228212456_cool_stuff   False        \
+\n""", stdout)
+        self.assertEqual('', stderr)
