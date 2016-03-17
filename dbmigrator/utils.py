@@ -121,9 +121,9 @@ def get_schema_versions(cursor, versions_only=True, raise_error=True):
     except psycopg2.ProgrammingError as e:
         if raise_error:
             raise
-        logger.warn(str(e))
-        logger.warn('You may need to run "dbmigrator init" to create the '
-                    'schema_migrations table')
+        logger.warning(str(e))
+        logger.warning('You may need to run "dbmigrator init" to create the '
+                       'schema_migrations table')
 
 
 def get_pending_migrations(migration_directories, cursor, import_modules=False,
