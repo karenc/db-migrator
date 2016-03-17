@@ -8,6 +8,10 @@
 
 import sys
 import unittest
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 import pkg_resources
 import psycopg2
@@ -38,6 +42,25 @@ class VersionTestCase(BaseTestCase):
         else:
             self.assertEqual(stdout, '')
             self.assertEqual(stderr.strip(), version)
+
+
+class VerboseTestCase(BaseTestCase):
+    @mock.patch('dbmigrator.logger.debug')
+    def test(self, debug):
+        from ..cli import main
+        from .. import logger
+
+        with testing.captured_output() as (out, err):
+            main(['-v', '--config', testing.test_config_path, 'init'])
+
+        stdout = out.getvalue()
+        stderr = err.getvalue()
+
+        self.assertEqual(1, debug.call_count)
+        self.assertTrue(debug.call_args[0][0].startswith('args: {'))
+
+        self.assertEqual('Schema migrations initialized.\n', stdout)
+        self.assertEqual('', stderr)
 
 
 class ListTestCase(BaseTestCase):
