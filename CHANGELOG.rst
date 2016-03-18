@@ -1,6 +1,28 @@
 CHANGELOG
 ---------
 
+0.1.2 (2016-03-18)
+------------------
+
+ - :bug: Fix ``list`` to not explode when no migrations directories are given
+ - Log warning message for ``list`` if schema_migrations table doesn't exist
+ - Change ``--verbose`` to set the logger level to debug
+ - Add test for utils.timestamp
+ - Add test for utils.rollback_migration
+ - Add test for utils.run_migration
+ - Add test for utils.get_pending_migrations
+ - Add test for utils.get_migrations
+ - Add test for utils.import_migration
+ - Make ``dbmigrator generate`` generate pep8 compliant code
+ - Fix ``dbmigrator generate`` migrations directory lookup
+ - Add test for utils.with_cursor
+ - Add test for utils.get_settings_from_config
+ - Add integration tests with test packages
+ - Add pep8 to travis
+ - Add a logger for dbmigrator that writes to stdout
+ - Change version information option to ``-V``
+ - Sort migrations by their filename, not the full path
+
 0.1.1 (2016-02-24)
 ------------------
 
