@@ -123,3 +123,23 @@ name                      | is applied | date applied
 20160228212456_cool_stuff   False        \
 \n""", stdout)
         self.assertEqual('', stderr)
+
+
+class InitTestCase(BaseTestCase):
+    def test_multiple_contexts(self):
+        from ..cli import main
+
+        testing.install_test_packages()
+
+        cmd = ['--db-connection-string', testing.db_connection_string]
+        main(cmd + ['--context', 'package-a', '--context', 'package-b',
+                    'init'])
+
+        with testing.captured_output() as (out, err):
+            main(cmd + ['--context', 'package-a', '--context', 'package-b',
+                        'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637_add_table    True', stdout)
+        self.assertIn('20160228210326_initial_da   True', stdout)
+        self.assertIn('20160228212456_cool_stuff   True', stdout)
