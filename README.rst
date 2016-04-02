@@ -1,6 +1,12 @@
 DB Migrator
 ===========
 
+.. image:: https://travis-ci.org/karenc/db-migrator.svg?branch=master
+   :target: https://travis-ci.org/karenc/db-migrator
+
+.. image:: https://coveralls.io/repos/github/karenc/db-migrator/badge.svg?branch=master
+   :target: https://coveralls.io/github/karenc/db-migrator?branch=master
+
 generate
 --------
 
