@@ -249,3 +249,25 @@ To rollback the last 2 migrations::
      ALTER TABLE ONLY abstracts ALTER COLUMN abstractid SET DEFAULT nextval('abstracts_abstractid_seq'::regclass);
 
     Rolling back migration 20151217170514 add_id_to_users
+
+mark
+----
+
+Example usage::
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ list
+    name                      | is applied | date applied
+    ----------------------------------------------------------------------
+    20151217170514_add_id_to_   True         2016-01-31 00:15:01.692570+01:00
+    20151218145832_add_karen_   False               
+    20160107200351_blah         False               
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ mark -f 20151217170514
+    Migration 20151217170514 marked as not been run
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ list
+    name                      | is applied | date applied
+    ----------------------------------------------------------------------
+    20151217170514_add_id_to_   False               
+    20151218145832_add_karen_   False               
+    20160107200351_blah         False               
