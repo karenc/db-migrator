@@ -159,18 +159,25 @@ def compare_schema(db_connection_string, callback, *args, **kwargs):
 def run_migration(cursor, version, migration_name, migration):
     print('Running migration {} {}'.format(version, migration_name))
     migration.up(cursor)
-    cursor.execute('INSERT INTO schema_migrations VALUES (%s)', (version,))
+    mark_migration(cursor, version, True)
     cursor.connection.commit()
 
 
 def rollback_migration(cursor, version, migration_name, migration):
     print('Rolling back migration {} {}'.format(version, migration_name))
     migration.down(cursor)
-    cursor.execute('DELETE FROM schema_migrations WHERE version = %s',
-                   (version,))
+    mark_migration(cursor, version, False)
     cursor.connection.commit()
 
 
 def timestamp():
     now = datetime.datetime.utcnow()
     return now.strftime('%Y%m%d%H%M%S')
+
+
+def mark_migration(cursor, version, completed):
+    if completed:
+        cursor.execute('INSERT INTO schema_migrations VALUES (%s)', (version,))
+    else:
+        cursor.execute('DELETE FROM schema_migrations WHERE version = %s',
+                       (version,))
