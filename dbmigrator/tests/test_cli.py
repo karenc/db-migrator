@@ -20,6 +20,11 @@ from . import testing
 
 
 class BaseTestCase(unittest.TestCase):
+    @property
+    def target(self):
+        from ..cli import main
+        return main
+
     def tearDown(self):
         with psycopg2.connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
@@ -28,11 +33,9 @@ class BaseTestCase(unittest.TestCase):
 
 class VersionTestCase(BaseTestCase):
     def test(self):
-        from ..cli import main
-
         version = pkg_resources.get_distribution('db-migrator').version
         with testing.captured_output() as (out, err):
-            self.assertRaises(SystemExit, main, ['-V'])
+            self.assertRaises(SystemExit, self.target, ['-V'])
 
         stdout = out.getvalue()
         stderr = err.getvalue()
@@ -47,11 +50,10 @@ class VersionTestCase(BaseTestCase):
 class VerboseTestCase(BaseTestCase):
     @mock.patch('dbmigrator.logger.debug')
     def test(self, debug):
-        from ..cli import main
         from .. import logger
 
         with testing.captured_output() as (out, err):
-            main(['-v', '--config', testing.test_config_path, 'init'])
+            self.target(['-v', '--config', testing.test_config_path, 'init'])
 
         stdout = out.getvalue()
         stderr = err.getvalue()
@@ -65,12 +67,10 @@ class VerboseTestCase(BaseTestCase):
 
 class ListTestCase(BaseTestCase):
     def test_no_migrations_directory(self):
-        from ..cli import main
-
         cmd = ['--db-connection-string', testing.db_connection_string]
-        main(cmd + ['init'])
+        self.target(cmd + ['init'])
         with testing.captured_output() as (out, err):
-            main(cmd + ['list'])
+            self.target(cmd + ['list'])
 
         stdout = out.getvalue()
         stderr = err.getvalue()
@@ -84,11 +84,9 @@ migrations directory undefined\n""")
 
     @mock.patch('dbmigrator.logger.warning')
     def test_no_table(self, warning):
-        from ..cli import main
-
         cmd = ['--config', testing.test_config_path]
         with testing.captured_output() as (out, err):
-            main(cmd + ['list'])
+            self.target(cmd + ['list'])
 
         stdout = out.getvalue()
         stderr = err.getvalue()
@@ -103,14 +101,12 @@ name                      | is applied | date applied
         self.assertEqual('', stderr)
 
     def test(self):
-        from ..cli import main
-
         testing.install_test_packages()
 
         cmd = ['--db-connection-string', testing.db_connection_string]
-        main(cmd + ['init'])
+        self.target(cmd + ['init'])
         with testing.captured_output() as (out, err):
-            main(cmd + ['-v', '--context', 'package-a', 'list'])
+            self.target(cmd + ['-v', '--context', 'package-a', 'list'])
 
         stdout = out.getvalue()
         stderr = err.getvalue()
@@ -127,17 +123,15 @@ name                      | is applied | date applied
 
 class InitTestCase(BaseTestCase):
     def test_multiple_contexts(self):
-        from ..cli import main
-
         testing.install_test_packages()
 
         cmd = ['--db-connection-string', testing.db_connection_string]
-        main(cmd + ['--context', 'package-a', '--context', 'package-b',
-                    'init'])
+        self.target(cmd + ['--context', 'package-a', '--context', 'package-b',
+                           'init'])
 
         with testing.captured_output() as (out, err):
-            main(cmd + ['--context', 'package-a', '--context', 'package-b',
-                        'list'])
+            self.target(cmd + ['--context', 'package-a', '--context',
+                               'package-b', 'list'])
 
         stdout = out.getvalue()
         self.assertIn('20160228202637_add_table    True', stdout)
