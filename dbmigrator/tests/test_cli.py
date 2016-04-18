@@ -137,3 +137,112 @@ class InitTestCase(BaseTestCase):
         self.assertIn('20160228202637_add_table    True', stdout)
         self.assertIn('20160228210326_initial_da   True', stdout)
         self.assertIn('20160228212456_cool_stuff   True', stdout)
+
+
+class MarkTestCase(BaseTestCase):
+    def test_missing_t_f_option(self):
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init'])
+
+        with self.assertRaises(Exception) as cm:
+            self.target(cmd + ['--context', 'package-a', 'mark',
+                               '20160228212456'])
+
+        print(str(cm.exception))
+
+    def test_mark_as_true(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a',
+                               'mark', '-t', '20160228212456'])
+
+        stdout = out.getvalue()
+        self.assertEqual('Migration 20160228212456 marked as completed\n',
+                         stdout)
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637_add_table    False', stdout)
+        self.assertIn('20160228212456_cool_stuff   True', stdout)
+
+    def test_mark_as_true_already_true(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init'])
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a',
+                               'mark', '-t', '20160228212456'])
+
+        stdout = out.getvalue()
+        self.assertEqual('Migration 20160228212456 marked as completed\n',
+                         stdout)
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637_add_table    True', stdout)
+        self.assertIn('20160228212456_cool_stuff   True', stdout)
+
+    @mock.patch('dbmigrator.logger.warning')
+    def test_migration_not_found(self, warning):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+
+        self.target(cmd + ['mark', '-t', '012345'])
+        warning.assert_called_with('Migration 012345 not found')
+
+        self.target(cmd + ['mark', '-f', '012345'])
+        warning.assert_called_with('Migration 012345 not found')
+
+    def test_mark_as_false(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init'])
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['mark', '-f', '20160228202637'])
+
+        stdout = out.getvalue()
+        self.assertEqual('Migration 20160228202637 marked as not been run\n',
+                         stdout)
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637_add_table    False', stdout)
+        self.assertIn('20160228212456_cool_stuff   True', stdout)
+
+    def test_mark_as_false_already_false(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'mark', '-f',
+                               '20160228202637'])
+
+        stdout = out.getvalue()
+        self.assertEqual('Migration 20160228202637 marked as not been run\n',
+                         stdout)
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637_add_table    False', stdout)
+        self.assertIn('20160228212456_cool_stuff   False', stdout)
