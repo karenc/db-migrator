@@ -1,6 +1,22 @@
 CHANGELOG
 ---------
 
+0.1.3 (2016-04-19)
+------------------
+
+ - Separate cli tests into different test cases
+ - Change test config to use the travis database
+ - Change logger.warn to logger.warning
+ - Add test case for cli verbose option
+ - Add tests for ``dbmigrator list``
+ - Add CLI init test case for multiple contexts
+ - Add travis and coveralls badges to README
+ - Move cli.main import to base test case
+ - Refactor code for marking a migration as completed or not
+ - Add ``mark`` command for marking a migration as completed or not
+ - Add tests for the ``mark`` command
+ - Update README with example usage for the ``mark`` command
+
 0.1.2 (2016-03-18)
 ------------------
 
