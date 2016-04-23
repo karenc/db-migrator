@@ -6,7 +6,10 @@
 # See LICENCE.txt for details.
 # ###
 
+import os
+import shutil
 import sys
+import tempfile
 import unittest
 try:
     from unittest import mock
@@ -41,7 +44,6 @@ class VersionTestCase(BaseTestCase):
         stderr = err.getvalue()
         if sys.version_info[0] == 3:
             self.assertEqual(stdout.strip(), version)
-            self.assertEqual(stderr, '')
         else:
             self.assertEqual(stdout, '')
             self.assertEqual(stderr.strip(), version)
@@ -246,3 +248,78 @@ class MarkTestCase(BaseTestCase):
         stdout = out.getvalue()
         self.assertIn('20160228202637   add_table         False', stdout)
         self.assertIn('20160228212456   cool_stuff        False', stdout)
+
+
+class GenerateTestCase(BaseTestCase):
+    @mock.patch('dbmigrator.utils.timestamp')
+    def test(self, timestamp):
+        timestamp.return_value = '20160423231932'
+        filename = '{}_a_new_migration.py'.format(timestamp())
+        expected_path = os.path.join(
+            testing.test_migrations_directories[0], filename)
+
+        def cleanup():
+            if os.path.exists(expected_path):
+                os.remove(expected_path)
+        self.addCleanup(cleanup)
+
+        testing.install_test_packages()
+
+        with testing.captured_output() as (out, err):
+            self.target(['--context', 'package-a', 'generate',
+                         'a_new_migration'])
+
+        stdout = out.getvalue()
+        stderr = err.getvalue()
+
+        self.assertEqual(
+            'Generated migration script "dbmigrator/tests/data/package-a/'
+            'package_a/migrations/{}"\n'.format(filename),
+            stdout)
+        self.assertEqual('', stderr)
+
+        self.assertTrue(os.path.exists(expected_path))
+
+        with open(expected_path, 'r') as f:
+            content = f.read()
+
+        self.assertIn('# -*- coding: utf-8 -*-', content)
+        self.assertIn('def up(cursor):', content)
+        self.assertIn('def down(cursor):', content)
+
+    def test_no_migrations_directory(self):
+        with self.assertRaises(Exception) as cm:
+            self.target(['generate', 'a_new_migration'])
+
+        self.assertEqual('migrations directory undefined',
+                         str(cm.exception))
+
+    def test_multiple_migrations_directory(self):
+        tmp_dir = tempfile.gettempdir()
+        tmp_dir2 = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp_dir2)
+        with self.assertRaises(Exception) as cm:
+            self.target(['--migrations-directory', tmp_dir,
+                         '--migrations-directory', tmp_dir2,
+                         'generate', 'a_new_migration'])
+
+        self.assertEqual('more than one migrations directory specified',
+                         str(cm.exception))
+
+    @mock.patch('dbmigrator.utils.timestamp')
+    def test_migrations_directory_does_not_exist(self, timestamp):
+        timestamp.return_value = '20160423231932'
+        filename = '{}_a_new_migration.py'.format(timestamp())
+        tmp_dir = tempfile.gettempdir()
+        directory = '{}/dbmigrator-tests/m'.format(tmp_dir)
+        expected_path = os.path.join(directory, filename)
+
+        def cleanup():
+            if os.path.exists(expected_path):
+                os.remove(expected_path)
+        self.addCleanup(cleanup)
+
+        self.target(['--migrations-directory', directory,
+                     'generate', 'a_new_migration'])
+
+        self.assertTrue(os.path.exists(expected_path))
