@@ -8,6 +8,7 @@
 
 import datetime
 import os.path
+import tempfile
 import unittest
 try:
     from unittest import mock
@@ -56,8 +57,10 @@ CREATE TABLE schema_migrations (
     def test_get_settings_from_config(self):
         from ..utils import get_settings_from_config
 
+        tmp_dir = tempfile.gettempdir()
+
         settings = {
-            'migrations_directory': '/tmp/',
+            'migrations_directory': tmp_dir,
             }
 
         get_settings_from_config(
@@ -68,7 +71,7 @@ CREATE TABLE schema_migrations (
         self.assertEqual(
             settings,
             {'db_connection_string': testing.db_connection_string,
-             'migrations_directory': '/tmp/'})
+             'migrations_directory': tmp_dir})
 
     def test_with_cursor(self):
         from ..utils import with_cursor
