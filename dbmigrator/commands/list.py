@@ -20,11 +20,12 @@ def cli_command(cursor, migrations_directory='', db_connection_string='',
                                   raise_error=False)))
     migrations = utils.get_migrations(migrations_directory)
 
-    print('{:<25} | is applied | date applied'.format('name'))
+    print('version        | {:<15} | is applied | date applied'
+          .format('name'))
     print('-' * 70)
     for version, migration_name in migrations:
-        print('{: <25}   {!s: <10}   {}'.format(
-            '_'.join([version, migration_name])[:25],
+        print('{}   {: <15}   {!s: <10}   {}'.format(
+            version, migration_name[:15],
             bool(version in migrated_versions),
             migrated_versions.get(version, '')))
 

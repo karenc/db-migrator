@@ -76,7 +76,7 @@ class ListTestCase(BaseTestCase):
         stderr = err.getvalue()
 
         self.assertEqual(stdout, """\
-name                      | is applied | date applied
+version        | name            | is applied | date applied
 ----------------------------------------------------------------------\n""")
         self.assertEqual(stderr, """\
 context undefined, using current directory name "['db-migrator']"
@@ -92,7 +92,7 @@ migrations directory undefined\n""")
         stderr = err.getvalue()
 
         self.assertEqual("""\
-name                      | is applied | date applied
+version        | name            | is applied | date applied
 ----------------------------------------------------------------------\n""",
                          stdout)
 
@@ -112,11 +112,11 @@ name                      | is applied | date applied
         stderr = err.getvalue()
 
         self.assertEqual("""\
-name                      | is applied | date applied
+version        | name            | is applied | date applied
 ----------------------------------------------------------------------
-20160228202637_add_table    False        \
+20160228202637   add_table         False        \
 
-20160228212456_cool_stuff   False        \
+20160228212456   cool_stuff        False        \
 \n""", stdout)
         self.assertEqual('', stderr)
 
@@ -134,9 +134,9 @@ class InitTestCase(BaseTestCase):
                                'package-b', 'list'])
 
         stdout = out.getvalue()
-        self.assertIn('20160228202637_add_table    True', stdout)
-        self.assertIn('20160228210326_initial_da   True', stdout)
-        self.assertIn('20160228212456_cool_stuff   True', stdout)
+        self.assertIn('20160228202637   add_table         True', stdout)
+        self.assertIn('20160228210326   initial_data      True', stdout)
+        self.assertIn('20160228212456   cool_stuff        True', stdout)
 
 
 class MarkTestCase(BaseTestCase):
@@ -169,8 +169,8 @@ class MarkTestCase(BaseTestCase):
             self.target(cmd + ['--context', 'package-a', 'list'])
 
         stdout = out.getvalue()
-        self.assertIn('20160228202637_add_table    False', stdout)
-        self.assertIn('20160228212456_cool_stuff   True', stdout)
+        self.assertIn('20160228202637   add_table         False', stdout)
+        self.assertIn('20160228212456   cool_stuff        True', stdout)
 
     def test_mark_as_true_already_true(self):
         testing.install_test_packages()
@@ -190,8 +190,8 @@ class MarkTestCase(BaseTestCase):
             self.target(cmd + ['--context', 'package-a', 'list'])
 
         stdout = out.getvalue()
-        self.assertIn('20160228202637_add_table    True', stdout)
-        self.assertIn('20160228212456_cool_stuff   True', stdout)
+        self.assertIn('20160228202637   add_table         True', stdout)
+        self.assertIn('20160228212456   cool_stuff        True', stdout)
 
     @mock.patch('dbmigrator.logger.warning')
     def test_migration_not_found(self, warning):
@@ -223,8 +223,8 @@ class MarkTestCase(BaseTestCase):
             self.target(cmd + ['--context', 'package-a', 'list'])
 
         stdout = out.getvalue()
-        self.assertIn('20160228202637_add_table    False', stdout)
-        self.assertIn('20160228212456_cool_stuff   True', stdout)
+        self.assertIn('20160228202637   add_table         False', stdout)
+        self.assertIn('20160228212456   cool_stuff        True', stdout)
 
     def test_mark_as_false_already_false(self):
         testing.install_test_packages()
@@ -244,5 +244,5 @@ class MarkTestCase(BaseTestCase):
             self.target(cmd + ['--context', 'package-a', 'list'])
 
         stdout = out.getvalue()
-        self.assertIn('20160228202637_add_table    False', stdout)
-        self.assertIn('20160228212456_cool_stuff   False', stdout)
+        self.assertIn('20160228202637   add_table         False', stdout)
+        self.assertIn('20160228212456   cool_stuff        False', stdout)
