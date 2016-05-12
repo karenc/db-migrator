@@ -1,6 +1,10 @@
 CHANGELOG
 ---------
 
+0.1.4 (2016-05-12)
+------------------
+ - Change ``dbmigrator list`` to list version and migration name separately
+
 0.1.3 (2016-04-19)
 ------------------
 
