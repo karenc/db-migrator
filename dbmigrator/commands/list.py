@@ -16,21 +16,33 @@ __all__ = ('cli_loader',)
 
 @utils.with_cursor
 def cli_command(cursor, migrations_directory='', db_connection_string='',
-                **kwargs):
+                wide=False, **kwargs):
     migrated_versions = dict(list(
         utils.get_schema_versions(cursor, versions_only=False,
                                   raise_error=False)))
     migrations = utils.get_migrations(migrations_directory)
 
-    print('version        | {:<15} | is applied | date applied'
-          .format('name'))
+    if wide:
+        migrations = list(migrations)
+        name_width = max([len(name) for _, name in migrations])
+    else:
+        name_width = 15
+
+    name_format = '{:<%s}' % (name_width,)
+    print('version        | {} | is applied | date applied'
+          .format(name_format.format('name')))
     print('-' * 70)
+
+    name_format = '{: <%s}' % (name_width,)
     for version, migration_name in migrations:
-        print('{}   {: <15}   {!s: <10}   {}'.format(
-            version, migration_name[:15],
+        print('{}   {}   {!s: <10}   {}'.format(
+            version, name_format.format(migration_name[:name_width]),
             bool(version in migrated_versions),
             migrated_versions.get(version, '')))
 
 
 def cli_loader(parser):
+    parser.add_argument('--wide', action='store_true',
+                        dest='wide', default=False,
+                        help='Display the full name of every migration')
     return cli_command
