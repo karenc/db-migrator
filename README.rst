@@ -7,24 +7,19 @@ DB Migrator
 .. image:: https://coveralls.io/repos/github/karenc/db-migrator/badge.svg?branch=master
    :target: https://coveralls.io/github/karenc/db-migrator?branch=master
 
-generate
+Settings
 --------
 
-Example usage::
+``dbmigrator`` requires a few settings to work:
 
-    dbmigrator generate add_id_to_users
+ - ``--migrations-directory``: the directory that contains all the migrations
+ - ``--context``: name of the python package containing an entry point to the
+   migrations directory
+ - ``--db-connection-string``: database host, port, name, user, password etc
+   for connecting to postgres
+ - ``--config``: a config file that contains the above settings
 
-generates a file called ``migrations/20151217170514_add_id_to_users.py``
-with content::
-
-    def up(cursor):
-        # TODO migration code
-        pass
-
-    def down(cursor):
-        # TODO rollback code
-        pass
-
+See ``dbmigrator -h``.
 
 To set the migrations directory using an entry point, in mymodule ``setup.py``::
 
@@ -56,6 +51,30 @@ or::
         return '{}/sql/migrations'.format(
             os.path.abspath(os.path.dirname(__file__)))
 
+or with a config file, ``development.ini``, that looks like this::
+
+    [app:main]
+    db-connection-string = postgres://dbuser@localhost/dbname
+
+
+generate
+--------
+
+Example usage::
+
+    dbmigrator generate add_id_to_users
+
+generates a file called ``migrations/20151217170514_add_id_to_users.py``
+with content::
+
+    def up(cursor):
+        # TODO migration code
+        pass
+
+    def down(cursor):
+        # TODO rollback code
+        pass
+
 
 init
 ----
@@ -63,11 +82,6 @@ init
 Example usage::
 
     dbmigrator --db-connection-string='postgres://dbuser@localhost/dbname' init
-
-or with a config file, ``development.ini``, that looks like this::
-
-    [app:main]
-    db-connection-string = postgres://dbuser@localhost/dbname
 
 Run the command::
 
