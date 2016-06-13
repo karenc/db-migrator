@@ -122,8 +122,8 @@ def get_schema_versions(cursor, versions_only=True, raise_error=True):
         if raise_error:
             raise
         logger.warning(str(e))
-        logger.warning('You may need to run "dbmigrator init" to create the '
-                       'schema_migrations table')
+        logger.warning('You may need to create the schema_migrations table: '
+                       'dbmigrator init --help')
 
 
 def get_pending_migrations(migration_directories, cursor, import_modules=False,

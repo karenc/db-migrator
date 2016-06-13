@@ -98,8 +98,9 @@ version        | name            | is applied | date applied
 ----------------------------------------------------------------------\n""",
                          stdout)
 
-        warning.assert_called_with('You may need to run "dbmigrator init" '
-                                   'to create the schema_migrations table')
+        warning.assert_called_with(
+            'You may need to create the schema_migrations table: '
+            'dbmigrator init --help')
         self.assertEqual('', stderr)
 
     def test(self):
