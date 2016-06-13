@@ -60,6 +60,8 @@ or with a config file, ``development.ini``, that looks like this::
 generate
 --------
 
+Generate a migration script in the migrations directory.
+
 Example usage::
 
     dbmigrator generate add_id_to_users
@@ -79,17 +81,24 @@ with content::
 init
 ----
 
+Initialize schema migrations table.  By default, all the migrations are assumed
+to have been applied to the database.
+
 Example usage::
 
     dbmigrator --db-connection-string='postgres://dbuser@localhost/dbname' init
 
-Run the command::
+There is an option to manually set the version of the database.  For example,
+if none of the migrations have been applied to the database, you can::
 
-    dbmigrator --config=development.ini init
+    dbmigrator --config=development.ini init --version=0
 
 
 list
 ----
+
+List migration versions, names, whether it has been applied and the date
+applied.
 
 Example usage::
 
@@ -104,9 +113,9 @@ Example usage::
 migrate
 -------
 
-Example usage:
+Run pending migrations.
 
-With two migrations in the migrations directory,
+For example, with two migrations in the migrations directory,
 
 ``migrations/20151217170514_add_id_to_users.py``::
 
@@ -173,9 +182,9 @@ if all migrations have already been run::
 rollback
 --------
 
-Example usage:
+Rollback a migration.
 
-With two migrations in the migrations directory,
+For example, with two migrations in the migrations directory,
 
 ``migrations/20151217170514_add_id_to_users.py``::
 
@@ -267,6 +276,8 @@ To rollback the last 2 migrations::
 mark
 ----
 
+Mark a migration as completed or not completed.
+
 Example usage::
 
     $ dbmigrator --config=development.ini --migrations-directory=migrations/ list
@@ -276,6 +287,8 @@ Example usage::
     20151218145832_add_karen_   False               
     20160107200351_blah         False               
 
+To mark a migration as not completed::
+
     $ dbmigrator --config=development.ini --migrations-directory=migrations/ mark -f 20151217170514
     Migration 20151217170514 marked as not been run
 
@@ -283,5 +296,17 @@ Example usage::
     name                      | is applied | date applied
     ----------------------------------------------------------------------
     20151217170514_add_id_to_   False               
+    20151218145832_add_karen_   False               
+    20160107200351_blah         False               
+
+To mark a migration as completed::
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ mark -f 20151217170514
+    Migration 20151217170514 marked as completed
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ list
+    name                      | is applied | date applied
+    ----------------------------------------------------------------------
+    20151217170514_add_id_to_   True         2016-06-13 16:39:58.777893+01:00
     20151218145832_add_karen_   False               
     20160107200351_blah         False               
