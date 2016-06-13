@@ -102,12 +102,21 @@ applied.
 
 Example usage::
 
-    $ dbmigrator list
-    name                      | is applied | date applied
+    $ dbmigrator --config=development.ini list
+    version        | name            | is applied | date applied
     ----------------------------------------------------------------------
-    20151217170514_add_id_to_   True         2016-01-31 00:15:01.692570+01:00
-    20151218145832_add_karen_   False               
-    20160107200351_blah         False               
+    20151217170514   add_id_to_users   True         2016-01-31 00:15:01.692570+01:00
+    20151218145832   add_karen_to_us   False               
+    20160107200351   blah              False               
+
+To see the full migration name, use ``--wide``::
+
+    $ dbmigrator --config=development.ini list --wide
+    version        | name               | is applied | date applied
+    ----------------------------------------------------------------------
+    20151217170514   add_id_to_users      True         2016-01-31 00:15:01.692570+01:00
+    20151218145832   add_karen_to_users   False               
+    20160107200351   blah                 False               
 
 
 migrate
