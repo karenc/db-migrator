@@ -5,6 +5,8 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""List migration versions, names, whether it has been applied and the date
+applied."""
 
 from .. import utils
 

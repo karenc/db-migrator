@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Generate a migration script in the migrations directory."""
 
 import os
 

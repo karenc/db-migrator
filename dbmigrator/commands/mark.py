@@ -5,6 +5,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
+"""Mark a migration as completed or not completed."""
 
 from .. import logger, utils
 

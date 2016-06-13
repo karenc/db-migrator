@@ -45,7 +45,7 @@ def load_cli(subparsers):
         module = '{}.{}'.format(__package__, command_name)
         loader, description = _import_loader(module)
         parser = subparsers.add_parser(command_name,
-                                       help=description)
+                                       description=description)
         command = loader(parser)
         if command is None:
             raise RuntimeError('Failed to load "{}".'.format(command_name))
