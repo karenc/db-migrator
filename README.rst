@@ -285,7 +285,7 @@ To rollback the last 2 migrations::
 mark
 ----
 
-Mark a migration as completed or not completed.
+Mark a migration as completed, not completed or deferred.
 
 Example usage::
 
@@ -317,5 +317,17 @@ To mark a migration as completed::
     name                      | is applied | date applied
     ----------------------------------------------------------------------
     20151217170514_add_id_to_   True         2016-06-13 16:39:58.777893+01:00
+    20151218145832_add_karen_   False               
+    20160107200351_blah         False               
+
+To mark a migration as deferred means to ignore a migration when running ``migrate`` or ``rollback``::
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ mark -d 20151217170514
+    Migration 20151217170514 marked as deferred
+
+    $ dbmigrator --config=development.ini --migrations-directory=migrations/ list
+    name                      | is applied | date applied
+    ----------------------------------------------------------------------
+    20151217170514_add_id_to_   deferred     None
     20151218145832_add_karen_   False               
     20160107200351_blah         False               
