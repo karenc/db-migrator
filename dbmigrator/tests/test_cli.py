@@ -123,6 +123,27 @@ version        | name            | is applied | date applied
 \n""", stdout)
         self.assertEqual('', stderr)
 
+    def test_wide(self):
+        testing.install_test_packages()
+
+        cmd = ['--db-connection-string', testing.db_connection_string]
+        self.target(cmd + ['init'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['-v', '--context', 'package-a',
+                               'list', '--wide'])
+
+        stdout = out.getvalue()
+        stderr = err.getvalue()
+
+        self.assertEqual("""\
+version        | name       | is applied | date applied
+----------------------------------------------------------------------
+20160228202637   add_table    False        \
+
+20160228212456   cool_stuff   False        \
+\n""", stdout)
+        self.assertEqual('', stderr)
+
 
 class InitTestCase(BaseTestCase):
     def test_multiple_contexts(self):
