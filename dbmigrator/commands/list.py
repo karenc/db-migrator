@@ -17,6 +17,7 @@ __all__ = ('cli_loader',)
 @utils.with_cursor
 def cli_command(cursor, migrations_directory='', db_connection_string='',
                 wide=False, **kwargs):
+    # version -> applied timestamp
     migrated_versions = dict(list(
         utils.get_schema_versions(cursor, versions_only=False,
                                   raise_error=False)))
@@ -35,10 +36,13 @@ def cli_command(cursor, migrations_directory='', db_connection_string='',
 
     name_format = '{: <%s}' % (name_width,)
     for version, migration_name in migrations:
+        applied_timestamp = migrated_versions.get(version, '')
+        deferred = applied_timestamp is None
+        is_applied = deferred and 'deferred' or \
+            bool(version in migrated_versions)
         print('{}   {}   {!s: <10}   {}'.format(
             version, name_format.format(migration_name[:name_width]),
-            bool(version in migrated_versions),
-            migrated_versions.get(version, '')))
+            is_applied, migrated_versions.get(version, '')))
 
 
 def cli_loader(parser):

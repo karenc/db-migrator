@@ -110,10 +110,13 @@ def get_migrations(migration_directories, import_modules=False, reverse=False):
                 yield version, migration_name
 
 
-def get_schema_versions(cursor, versions_only=True, raise_error=True):
+def get_schema_versions(cursor, versions_only=True, raise_error=True,
+                        include_deferred=True):
     try:
         cursor.execute('SELECT * FROM schema_migrations ORDER BY version')
         for i in cursor.fetchall():
+            if not include_deferred and i[1] is None:
+                continue
             if versions_only:
                 yield i[0]
             else:
@@ -176,7 +179,10 @@ def timestamp():
 
 
 def mark_migration(cursor, version, completed):
-    if completed:
+    if completed == 'deferred':
+        cursor.execute('INSERT INTO schema_migrations (version, applied) '
+                       'VALUES (%s, NULL)', (version,))
+    elif completed:
         cursor.execute('INSERT INTO schema_migrations VALUES (%s)', (version,))
     else:
         cursor.execute('DELETE FROM schema_migrations WHERE version = %s',

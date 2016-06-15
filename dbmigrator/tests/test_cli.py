@@ -164,7 +164,7 @@ class InitTestCase(BaseTestCase):
 
 
 class MarkTestCase(BaseTestCase):
-    def test_missing_t_f_option(self):
+    def test_missing_t_f_d_option(self):
         cmd = ['--db-connection-string', testing.db_connection_string]
 
         self.target(cmd + ['--context', 'package-a', 'init'])
@@ -173,7 +173,7 @@ class MarkTestCase(BaseTestCase):
             self.target(cmd + ['--context', 'package-a', 'mark',
                                '20160228212456'])
 
-        print(str(cm.exception))
+        self.assertEqual('-t, -f or -d must be supplied.', str(cm.exception))
 
     def test_mark_as_true(self):
         testing.install_test_packages()
@@ -269,6 +269,60 @@ class MarkTestCase(BaseTestCase):
 
         stdout = out.getvalue()
         self.assertIn('20160228202637   add_table         False', stdout)
+        self.assertIn('20160228212456   cool_stuff        False', stdout)
+
+    def test_mark_as_deferred(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+
+        # mark migration as deferred
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'mark', '-d',
+                               '20160228202637'])
+
+        stdout = out.getvalue()
+        self.assertEqual('Migration 20160228202637 marked as deferred\n',
+                         stdout)
+
+        # check list output
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637   add_table         deferred', stdout)
+        self.assertIn('20160228212456   cool_stuff        False', stdout)
+
+        # try running migrations
+        self.target(cmd + ['--context', 'package-a', 'migrate'])
+
+        # check that the table is not created by the migration
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute("""\
+SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'a_table'""")
+                table_exists = cursor.fetchone()
+        self.assertEqual(None, table_exists)
+
+        # check list output again
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637   add_table         deferred', stdout)
+        self.assertIn('20160228212456   cool_stuff        True', stdout)
+
+        # check that rollback does not rollback a deferred migration
+        self.target(cmd + ['--context', 'package-a', 'rollback', '--step=2'])
+
+        # check list output again
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637   add_table         deferred', stdout)
         self.assertIn('20160228212456   cool_stuff        False', stdout)
 
 
