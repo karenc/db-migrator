@@ -336,10 +336,7 @@ class GenerateTestCase(BaseTestCase):
         directory = '{}/dbmigrator-tests/m'.format(tmp_dir)
         expected_path = os.path.join(directory, filename)
 
-        def cleanup():
-            if os.path.exists(expected_path):
-                os.remove(expected_path)
-        self.addCleanup(cleanup)
+        self.addCleanup(shutil.rmtree, directory)
 
         self.target(['--migrations-directory', directory,
                      'generate', 'a_new_migration'])
