@@ -9,9 +9,11 @@ from __future__ import print_function
 import argparse
 import logging
 import os
+import signal
 import sys
 
 import pkg_resources
+import psycopg2
 
 from . import commands, utils, logger
 
@@ -21,6 +23,12 @@ DEFAULTS = {
 
 
 def main(argv=sys.argv[1:]):
+    # psycopg2 / libpq doesn't respond to SIGINT (ctrl-c):
+    # https://github.com/psycopg/psycopg2/issues/333
+    # To get around this problem, using code from:
+    # http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/ # noqa
+    psycopg2.extensions.set_wait_callback(utils.wait_select_inter)
+
     parser = argparse.ArgumentParser(description='DB Migrator')
 
     parser.add_argument('--verbose', '-v', action='store_true')

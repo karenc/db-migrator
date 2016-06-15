@@ -17,12 +17,37 @@ import functools
 import glob
 import os
 import pkg_resources
-import psycopg2
 import re
+from select import select
 import sys
 import subprocess
 
+import psycopg2
+from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
+
 from . import logger
+
+
+# psycopg2 / libpq doesn't respond to SIGINT (ctrl-c):
+# https://github.com/psycopg/psycopg2/issues/333
+# To get around this problem, using code from:
+# http://initd.org/psycopg/articles/2014/07/20/cancelling-postgresql-statements-python/ # noqa
+def wait_select_inter(conn):
+    while 1:
+        try:
+            state = conn.poll()
+            if state == POLL_OK:
+                break
+            elif state == POLL_READ:
+                select([conn.fileno()], [], [])
+            elif state == POLL_WRITE:
+                select([], [conn.fileno()], [])
+            else:
+                raise conn.OperationalError(
+                    'bad state from poll: {}'.format(state))
+        except KeyboardInterrupt:
+            conn.cancel()
+            continue
 
 
 def get_settings_from_entry_points(settings, contexts):
