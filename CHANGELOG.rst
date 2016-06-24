@@ -1,6 +1,17 @@
 CHANGELOG
 ---------
 
+0.2.0 (2016-06-24)
+------------------
+
+- Add psycopg2 wait callback so ctrl-c stops a migration
+- Implement mark a migration as deferred: ``mark -d``
+- Add --wide option for ``list`` to display the full migration name
+- Update command usage in README
+- Add help message to dbmigrator commands
+- Warn user with ``dbmigrator init --help`` if schema migrations doesn't exist
+- Add CLI test for generating migrations
+
 0.1.4 (2016-05-12)
 ------------------
  - Change ``dbmigrator list`` to list version and migration name separately
