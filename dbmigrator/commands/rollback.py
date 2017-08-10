@@ -7,7 +7,7 @@
 # ###
 """Rollback a migration."""
 
-from .. import utils
+from .. import logger, utils
 
 
 __all__ = ('cli_loader',)
@@ -18,7 +18,7 @@ def cli_command(cursor, migrations_directory='', steps=1,
                 db_connection_string='', **kwargs):
     migrated_versions = list(utils.get_schema_versions(
         cursor, include_deferred=False))
-    print('migrated_versions: {}'.format(migrated_versions))
+    logger.debug('migrated_versions: {}'.format(migrated_versions))
     if not migrated_versions:
         print('No migrations to roll back.')
         return
