@@ -45,4 +45,7 @@ def install_test_packages(packages=None):
     if packages is None:
         packages = test_packages
     for package in packages:
-        pip.main(['install', '-e', os.path.join(test_data_path, package)])
+        with captured_output() as (out, err):
+            pip.main(['install', '-e', os.path.join(test_data_path, package)])
+        stderr = err.getvalue()
+        sys.stderr.write(stderr)
