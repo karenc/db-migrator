@@ -423,3 +423,72 @@ class MigrateTestCase(BaseTestCase):
                     SELECT table_name FROM information_schema.tables
                         WHERE table_name = 'a_table'""")
                 self.assertEqual([('a_table',)], cursor.fetchall())
+
+
+class RollbackTestCase(BaseTestCase):
+    @mock.patch('dbmigrator.utils.timestamp')
+    def test(self, timestamp):
+        timestamp.return_value = '20160423231932'
+
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string,
+               '--context', 'package-a']
+
+        def cleanup():
+            with psycopg2.connect(testing.db_connection_string) as db_conn:
+                with db_conn.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS a_table')
+            path = os.path.join(
+                testing.test_migrations_directories[0],
+                '{}_new_one.py'.format(timestamp()))
+            if os.path.exists(path):
+                os.remove(path)
+
+        self.addCleanup(cleanup)
+
+        self.target(cmd + ['init', '--version', '0'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        # Generate a new migration that is not yet run
+        self.target(cmd + ['generate', 'new_one'])
+
+        # Rollback once, the table should still be there
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['rollback'])
+        stdout = out.getvalue()
+        self.assertIn('Rolling back migration 20160228212456', stdout)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute("""\
+SELECT table_name FROM information_schema.tables
+    WHERE table_name = 'a_table'""")
+                self.assertEqual('a_table', cursor.fetchone()[0])
+
+        # Rollback the migration that created the table
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['rollback'])
+        stdout = out.getvalue()
+        self.assertIn('Rolling back migration 20160228202637', stdout)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute("""\
+SELECT table_name FROM information_schema.tables
+    WHERE table_name = 'a_table'""")
+                self.assertEqual(None, cursor.fetchone())
+
+        # Migrate again
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        # Rollback three migrations
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['rollback', '--steps', '3'])
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute("""\
+SELECT table_name FROM information_schema.tables
+    WHERE table_name = 'a_table'""")
+                self.assertEqual(None, cursor.fetchone())
