@@ -396,3 +396,30 @@ class GenerateTestCase(BaseTestCase):
                      'generate', 'a_new_migration'])
 
         self.assertTrue(os.path.exists(expected_path))
+
+
+class MigrateTestCase(BaseTestCase):
+    def test(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        def cleanup():
+            with psycopg2.connect(testing.db_connection_string) as db_conn:
+                with db_conn.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS a_table')
+
+        self.addCleanup(cleanup)
+
+        self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'migrate'])
+
+        stdout = out.getvalue()
+        self.assertIn('+CREATE TABLE a_table', stdout)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute("""\
+                    SELECT table_name FROM information_schema.tables
+                        WHERE table_name = 'a_table'""")
+                self.assertEqual([('a_table',)], cursor.fetchall())
