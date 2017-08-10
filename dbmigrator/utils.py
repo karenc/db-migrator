@@ -167,9 +167,10 @@ def get_migrations(migration_directories, import_modules=False, reverse=False):
 
 
 def get_schema_versions(cursor, versions_only=True, raise_error=True,
-                        include_deferred=True):
+                        include_deferred=True, order_by='version'):
     try:
-        cursor.execute('SELECT * FROM schema_migrations ORDER BY version')
+        cursor.execute('SELECT * FROM schema_migrations ORDER BY {}'
+                       .format(order_by))
         for i in cursor.fetchall():
             if not include_deferred and i[1] is None:
                 continue
@@ -187,20 +188,29 @@ def get_schema_versions(cursor, versions_only=True, raise_error=True,
 
 def get_pending_migrations(migration_directories, cursor, import_modules=False,
                            up_to_version=None):
-    migrated_versions = list(get_schema_versions(cursor))
-    if up_to_version and up_to_version in migrated_versions:
-        raise StopIteration
-    migrations = list(get_migrations(migration_directories, import_modules))
+    migrated_versions = {i[0]: i[1] or 'deferred'
+                         for i in get_schema_versions(
+                             cursor, versions_only=False)}
+
+    migrations = list(get_migrations(migration_directories,
+                                     import_modules=True))
     versions = [m[0] for m in migrations]
     if up_to_version:
         try:
             migrations = migrations[:versions.index(up_to_version) + 1]
         except ValueError:
             raise Exception('Version "{}" not found'.format(up_to_version))
+
     for migration in migrations:
-        version = migration[0]
-        if version not in migrated_versions:
-            yield migration
+        version, migration_name, mod = migration
+        if not import_modules:
+            migration = migration[:-1]
+        if migrated_versions.get(version) != 'deferred':
+            if hasattr(mod, 'should_run'):
+                # repeat migrations are always included
+                yield migration
+            elif version not in migrated_versions:
+                yield migration
 
 
 def compare_schema(db_connection_string, callback, *args, **kwargs):
@@ -216,6 +226,14 @@ def compare_schema(db_connection_string, callback, *args, **kwargs):
 
 
 def run_migration(cursor, version, migration_name, migration):
+    try:
+        if not migration.should_run(cursor):
+            print('Skipping migration {} {}: should_run is false'
+                  .format(version, migration_name))
+            return
+    except AttributeError:
+        # not a repeat migration
+        pass
     print('Running migration {} {}'.format(version, migration_name))
     migration.up(cursor)
     mark_migration(cursor, version, True)

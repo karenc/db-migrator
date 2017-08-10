@@ -17,28 +17,29 @@ __all__ = ('cli_loader',)
 def cli_command(cursor, migrations_directory='', steps=1,
                 db_connection_string='', **kwargs):
     migrated_versions = list(utils.get_schema_versions(
-        cursor, include_deferred=False))
+        cursor, include_deferred=False, order_by='applied'))
     logger.debug('migrated_versions: {}'.format(migrated_versions))
     if not migrated_versions:
         print('No migrations to roll back.')
         return
-    migrations = utils.get_migrations(
-        migrations_directory, import_modules=True, reverse=True)
+    migrations = {version: (name, migration)
+                  for version, name, migration in utils.get_migrations(
+                      migrations_directory, import_modules=True,
+                      reverse=True)}
 
     rolled_back = 0
-    for version, migration_name, migration in migrations:
-        if not migrated_versions:
+    for version in reversed(migrated_versions):
+        if version not in migrations:
+            print('Migration {} not found.'.format(version))
             break
-        last_version = migrated_versions[-1]
-        if version == last_version:
-            utils.compare_schema(db_connection_string,
-                                 utils.rollback_migration,
-                                 cursor,
-                                 version,
-                                 migration_name,
-                                 migration)
-            rolled_back += 1
-            migrated_versions.pop()
+        migration_name, migration = migrations[version]
+        utils.compare_schema(db_connection_string,
+                             utils.rollback_migration,
+                             cursor,
+                             version,
+                             migration_name,
+                             migration)
+        rolled_back += 1
         if rolled_back >= steps:
             break
 

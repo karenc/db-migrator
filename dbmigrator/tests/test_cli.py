@@ -424,6 +424,61 @@ class MigrateTestCase(BaseTestCase):
                         WHERE table_name = 'a_table'""")
                 self.assertEqual([('a_table',)], cursor.fetchall())
 
+    def test_repeat(self):
+        md = os.path.join(testing.test_data_path, 'md')
+        cmd = ['--db-connection-string', testing.db_connection_string,
+               '--migrations-directory', md]
+
+        def cleanup():
+            if os.path.exists('insert_data.txt'):
+                os.remove('insert_data.txt')
+            with psycopg2.connect(testing.db_connection_string) as db_conn:
+                with db_conn.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS a_table')
+
+        self.addCleanup(cleanup)
+
+        self.target(cmd + ['init', '--version', '0'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        stdout = out.getvalue()
+        self.assertIn('+CREATE TABLE a_table', stdout)
+        self.assertIn('Skipping migration 20170810093943', stdout)
+
+        # Run the repeat migration by creating this file
+        with open('insert_data.txt', 'w') as f:
+            f.write('三好')
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        stdout = out.getvalue()
+        self.assertIn('Running migration 20170810093943', stdout)
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        stdout = out.getvalue()
+        self.assertIn('Running migration 20170810093943', stdout)
+
+        # Make sure data has been inserted twice
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute('SELECT name FROM a_table')
+                self.assertEqual([('三好',), ('三好',)],
+                                 cursor.fetchall())
+
+        # Mark the repeat migration as deferred
+        self.target(cmd + ['mark', '-d', '20170810093943'])
+
+        # The deferred repeat migration should not run
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        stdout = out.getvalue()
+        self.assertIn('No pending migrations', stdout)
+
 
 class RollbackTestCase(BaseTestCase):
     @mock.patch('dbmigrator.utils.timestamp')
@@ -486,9 +541,63 @@ SELECT table_name FROM information_schema.tables
         # Rollback three migrations
         with testing.captured_output() as (out, err):
             self.target(cmd + ['rollback', '--steps', '3'])
+        stdout = out.getvalue()
+        self.assertIn('Rolling back migration 20160228212456', stdout)
+        self.assertIn('Rolling back migration 20160228202637', stdout)
+
         with psycopg2.connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""\
 SELECT table_name FROM information_schema.tables
     WHERE table_name = 'a_table'""")
                 self.assertEqual(None, cursor.fetchone())
+
+    def test_repeat(self):
+        md = os.path.join(testing.test_data_path, 'md')
+        cmd = ['--db-connection-string', testing.db_connection_string,
+               '--migrations-directory', md]
+
+        def cleanup():
+            if os.path.exists('insert_data.txt'):
+                os.remove('insert_data.txt')
+            with psycopg2.connect(testing.db_connection_string) as db_conn:
+                with db_conn.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS a_table')
+
+        self.addCleanup(cleanup)
+
+        self.target(cmd + ['init', '--version', '0'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        # Run the repeat migration by creating this file
+        with open('insert_data.txt', 'w') as f:
+            f.write('三好')
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        with open('insert_data.txt', 'w') as f:
+            f.write('ジョーカーゲーム')
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['migrate'])
+
+        # Version wise, the empty migration is more recent, but the repeat
+        # migration is the last migration applied, so rollback should rollback
+        # the repeat migration.
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['rollback'])
+        stdout = out.getvalue()
+        self.assertIn('Rolling back migration 20170810093943', stdout)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute('SELECT name FROM a_table')
+                self.assertEqual([('三好',)], cursor.fetchall())
+
+        # Next, rollback the empty migration
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['rollback'])
+        stdout = out.getvalue()
+        self.assertIn('Rolling back migration 20170810124056', stdout)

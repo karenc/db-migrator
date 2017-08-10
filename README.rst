@@ -69,9 +69,15 @@ Example usage::
 generates a file called ``migrations/20151217170514_add_id_to_users.py``
 with content::
 
+    # Uncomment should_run if this is a repeat migration
+    # def should_run(cursor):
+    #     # TODO return True if migration should run
+
+
     def up(cursor):
         # TODO migration code
         pass
+
 
     def down(cursor):
         # TODO rollback code
@@ -192,6 +198,24 @@ if all migrations have already been run::
 
     $ dbmigrator migrate
     No pending migrations.  Database is up to date.
+
+To write a repeat migration, make sure your migration has ``should_run`` defined::
+
+    def should_run(cursor):
+        return os.path.exists('data.txt')
+
+
+    def up(cursor):
+        with open('data.txt') as f:
+            data = f.read()
+        cursor.execute('INSERT INTO table VALUES (%s)', (data,))
+
+
+    def down(cursor):
+        pass
+
+The above migration will run **every time** ``migrate`` is called, except if it
+is marked as "deferred".  ``up`` is run if ``should_run`` returns True.
 
 rollback
 --------
