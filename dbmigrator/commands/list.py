@@ -21,11 +21,12 @@ def cli_command(cursor, migrations_directory='', db_connection_string='',
     migrated_versions = dict(list(
         utils.get_schema_versions(cursor, versions_only=False,
                                   raise_error=False)))
-    migrations = utils.get_migrations(migrations_directory)
+    migrations = utils.get_migrations(migrations_directory,
+                                      import_modules=True)
 
     if wide:
         migrations = list(migrations)
-        name_width = max([len(name) for _, name in migrations])
+        name_width = max([len(name) for _, name, _ in migrations])
     else:
         name_width = 15
 
@@ -35,14 +36,15 @@ def cli_command(cursor, migrations_directory='', db_connection_string='',
     print('-' * 70)
 
     name_format = '{: <%s}' % (name_width,)
-    for version, migration_name in migrations:
+    for version, migration_name, migration in migrations:
         applied_timestamp = migrated_versions.get(version, '')
-        deferred = applied_timestamp is None
+        deferred = utils.is_deferred(
+            version, migration, migrated_versions)
         is_applied = deferred and 'deferred' or \
-            bool(version in migrated_versions)
+            bool(migrated_versions.get(version))
         print('{}   {}   {!s: <10}   {}'.format(
             version, name_format.format(migration_name[:name_width]),
-            is_applied, migrated_versions.get(version, '')))
+            is_applied, migrated_versions.get(version) or ''))
 
 
 def cli_loader(parser):

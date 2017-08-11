@@ -59,6 +59,12 @@ def super_user():
             yield cursor
 
 
+def deferred(func):
+    """A decorator to mark the migration as deferred."""
+    func.dbmigrator_deferred = True
+    return func
+
+
 # psycopg2 / libpq doesn't respond to SIGINT (ctrl-c):
 # https://github.com/psycopg/psycopg2/issues/333
 # To get around this problem, using code from:
@@ -187,8 +193,8 @@ def get_schema_versions(cursor, versions_only=True, raise_error=True,
 
 
 def get_pending_migrations(migration_directories, cursor, import_modules=False,
-                           up_to_version=None):
-    migrated_versions = {i[0]: i[1] or 'deferred'
+                           up_to_version=None, include_defers=False):
+    migrated_versions = {i[0]: i[1]
                          for i in get_schema_versions(
                              cursor, versions_only=False)}
 
@@ -205,11 +211,13 @@ def get_pending_migrations(migration_directories, cursor, import_modules=False,
         version, migration_name, mod = migration
         if not import_modules:
             migration = migration[:-1]
-        if migrated_versions.get(version) != 'deferred':
+        deferred = is_deferred(version, mod, migrated_versions)
+        if not deferred or include_defers:
             if hasattr(mod, 'should_run'):
                 # repeat migrations are always included
                 yield migration
-            elif version not in migrated_versions:
+            elif deferred and include_defers or \
+                    not deferred and not migrated_versions.get(version):
                 yield migration
 
 
@@ -225,7 +233,17 @@ def compare_schema(db_connection_string, callback, *args, **kwargs):
                              n=10))).encode('utf-8'))
 
 
-def run_migration(cursor, version, migration_name, migration):
+def run_migration(cursor, version, migration_name, migration,
+                  run_deferred=False):
+    if not run_deferred:
+        migrated_versions = dict(list(
+            get_schema_versions(cursor, versions_only=False,
+                                raise_error=False)))
+        if is_deferred(version, migration, migrated_versions):
+            print('Skipping deferred migration {} {}'
+                  .format(version, migration_name))
+            return
+
     try:
         if not migration.should_run(cursor):
             print('Skipping migration {} {}: should_run is false'
@@ -234,6 +252,7 @@ def run_migration(cursor, version, migration_name, migration):
     except AttributeError:
         # not a repeat migration
         pass
+
     print('Running migration {} {}'.format(version, migration_name))
     migration.up(cursor)
     mark_migration(cursor, version, True)
@@ -261,3 +280,16 @@ def mark_migration(cursor, version, completed):
     else:
         cursor.execute('DELETE FROM schema_migrations WHERE version = %s',
                        (version,))
+
+
+def is_deferred(version, migration, migrated_versions):
+    # migrated versions: version -> applied timestamp
+    timestamp = migrated_versions.get(version, '')
+    if timestamp == '':
+        return hasattr(migration.up, 'dbmigrator_deferred')
+    elif timestamp is None:
+        return True
+    elif hasattr(migration, 'should_run') and \
+            hasattr(migration.up, 'dbmigrator_deferred'):
+        return True
+    return False

@@ -15,10 +15,10 @@ __all__ = ('cli_loader',)
 
 @utils.with_cursor
 def cli_command(cursor, migrations_directory='', version='',
-                db_connection_string='', **kwargs):
+                db_connection_string='', run_deferred=False, **kwargs):
     pending_migrations = utils.get_pending_migrations(
         migrations_directory, cursor, import_modules=True,
-        up_to_version=version)
+        up_to_version=version, include_defers=True)
 
     migrated = False
     for version, migration_name, migration in pending_migrations:
@@ -28,7 +28,8 @@ def cli_command(cursor, migrations_directory='', version='',
                              cursor,
                              version,
                              migration_name,
-                             migration)
+                             migration,
+                             run_deferred)
 
     if not migrated:
         print('No pending migrations.  Database is up to date.')
@@ -37,4 +38,7 @@ def cli_command(cursor, migrations_directory='', version='',
 def cli_loader(parser):
     parser.add_argument('--version',
                         help='Migrate database up to this version')
+    parser.add_argument('--run-deferred',
+                        action='store_true',
+                        help='Also run the deferred migrations')
     return cli_command

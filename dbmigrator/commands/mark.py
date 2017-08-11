@@ -19,20 +19,18 @@ def cli_command(cursor, migrations_directory='', migration_timestamp='',
     if completed is None:
         raise Exception('-t, -f or -d must be supplied.')
 
-    migrations = utils.get_migrations(
-        migrations_directory, import_modules=False)
-    for version, _ in migrations:
-        if version == migration_timestamp:
-            break
-    else:
-        migrated_versions = list(utils.get_schema_versions(cursor))
-        if migration_timestamp not in migrated_versions:
-            logger.warning(
-                'Migration {} not found'.format(migration_timestamp))
+    migrations = {version: migration
+                  for version, _, migration in utils.get_migrations(
+                      migrations_directory, import_modules=True)}
+    migration = migrations.get(migration_timestamp)
+    if migration is None:
+        logger.error(
+            'Migration {} not found'.format(migration_timestamp))
+        return
 
     utils.mark_migration(cursor, migration_timestamp, completed)
     if not completed:
-        message = 'not been run'
+        message = 'not been run and not deferred'
     elif completed == 'deferred':
         message = 'deferred'
     else:

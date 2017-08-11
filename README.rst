@@ -217,6 +217,17 @@ To write a repeat migration, make sure your migration has ``should_run`` defined
 The above migration will run **every time** ``migrate`` is called, except if it
 is marked as "deferred".  ``up`` is run if ``should_run`` returns True.
 
+To write a deferred migration, add ``@deferred`` to the up function::
+
+    from dbmigrator import deferred
+
+
+    @deferred
+    def up(cursor):
+        # this migration is automatically deferred
+
+The above migration will not run unless you use ``migrate --run-deferred``.
+
 rollback
 --------
 
