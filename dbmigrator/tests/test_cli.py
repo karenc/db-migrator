@@ -214,6 +214,12 @@ class InitTestCase(BaseTestCase):
         self.assertIn('20160228210326   initial_data      True', stdout)
         self.assertIn('20160228212456   cool_stuff        True', stdout)
 
+    def test_db_config_ini_key(self):
+        cmd = ['--config', testing.test_config2_path,
+               '--db-config-ini-key', 'postgresql.db-connection-string']
+
+        self.target(cmd + ['init'])
+
 
 class MarkTestCase(BaseTestCase):
     def test_missing_version(self):

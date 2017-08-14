@@ -43,6 +43,10 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--db-connection-string',
                         help='a psycopg2 db connection string')
 
+    parser.add_argument('--db-config-ini-key',
+                        help='the name of the ini key for the db connection '
+                             'string in the config file')
+
     parser.add_argument(
         '--super-user',
         default='postgres',
@@ -72,6 +76,11 @@ def main(argv=sys.argv[1:]):
             'migrations-directory',
             'db-connection-string',
             ], args)
+        if args.get('db_config_ini_key'):
+            utils.get_settings_from_config(args['config'], [
+                args['db_config_ini_key']], args)
+            args['db_connection_string'] = args.get(
+                args['db_config_ini_key'].replace('-', '_'))
 
     if not args.get('context') and not args.get('migrations_directory'):
         args['context'] = [os.path.basename(os.path.abspath(os.path.curdir))]
