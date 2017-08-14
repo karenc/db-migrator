@@ -144,6 +144,29 @@ version        | name       | is applied | date applied
 \n""", stdout)
         self.assertEqual('', stderr)
 
+    def test_migrations_directory_and_context(self):
+        testing.install_test_packages()
+
+        cmd = ['--db-connection-string', testing.db_connection_string]
+        md = os.path.join(testing.test_data_path, 'md')
+        self.target(cmd + ['init'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + [
+                '--context', 'package-a', '--context', 'package-b',
+                '--migrations-directory', md, 'list'])
+
+        stdout = out.getvalue()
+
+        # Assert package-a migrations are in
+        self.assertIn('20160228202637   add_table', stdout)
+        self.assertIn('20160228212456   cool_stuff', stdout)
+
+        # Assert package-b migrations are in
+        self.assertIn('20160228210326   initial_data', stdout)
+
+        # Assert migrations directory migrations are in
+        self.assertIn('20170810093842   create_a_table', stdout)
+
 
 class InitTestCase(BaseTestCase):
     def test_multiple_contexts(self):

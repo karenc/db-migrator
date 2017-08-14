@@ -58,7 +58,7 @@ def get_settings_from_entry_points(settings, contexts):
             context, __package__).values()
         for entry_point in entry_points:
             setting_name = entry_point.name
-            if settings.get(setting_name):
+            if not isinstance(settings.get(setting_name, []), list):
                 # don't overwrite settings given from the CLI
                 continue
 
@@ -76,7 +76,12 @@ def get_settings_from_entry_points(settings, contexts):
                 context_settings[setting_name] = value
 
     for name, value in context_settings.items():
-        settings[name] = value
+        if isinstance(settings.get(name), list):
+            if not isinstance(value, list):
+                value = [value]
+            settings[name] += value
+        else:
+            settings[name] = value
 
 
 def get_settings_from_config(filename, config_names, settings):
