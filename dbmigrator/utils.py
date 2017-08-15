@@ -15,6 +15,7 @@ import datetime
 import difflib
 import functools
 import glob
+import logging
 import os
 import pkg_resources
 import re
@@ -25,7 +26,14 @@ import subprocess
 import psycopg2
 from psycopg2.extensions import POLL_OK, POLL_READ, POLL_WRITE
 
-from . import logger
+
+logger = logging.getLogger('dbmigrator')
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter(
+    '[%(levelname)s] %(name)s (%(filename)s) - %(message)s'))
+logger.addHandler(handler)
 
 
 # psycopg2 / libpq doesn't respond to SIGINT (ctrl-c):
