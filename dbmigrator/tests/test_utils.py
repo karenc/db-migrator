@@ -36,6 +36,38 @@ CREATE TABLE schema_migrations (
                 cursor.execute('DROP TABLE IF EXISTS a_table')
                 cursor.execute('DROP TABLE IF EXISTS schema_migrations')
 
+    def test_super_user(self):
+        from ..utils import super_user, with_cursor
+
+        def cleanup():
+            with psycopg2.connect(testing.db_connection_string,
+                                  user='postgres') as db_conn:
+                with db_conn.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS super_table')
+
+        self.addCleanup(cleanup)
+
+        with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_conn.cursor() as cursor:
+                cursor.execute('SELECT current_user')
+                self.assertEqual('travis', cursor.fetchone()[0])
+
+                with super_user() as super_cursor:
+                    super_cursor.execute('SELECT current_user')
+                    self.assertEqual('postgres', super_cursor.fetchone()[0])
+
+                    super_cursor.execute('CREATE TABLE super_table (id TEXT)')
+                    super_cursor.execute(
+                        'GRANT ALL PRIVILEGES ON TABLE super_table TO travis')
+                    super_cursor.execute(
+                        "INSERT INTO super_table VALUES ('62')")
+
+                cursor.execute('SELECT current_user')
+                self.assertEqual('travis', cursor.fetchone()[0])
+
+                cursor.execute('SELECT * FROM super_table')
+                self.assertEqual('62', cursor.fetchone()[0])
+
     def test_get_settings_from_entry_points(self):
         from ..utils import get_settings_from_entry_points
 

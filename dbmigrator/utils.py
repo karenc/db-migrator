@@ -11,6 +11,7 @@ try:
 except ImportError:
     # python 2
     import ConfigParser as configparser
+from contextlib import contextmanager
 import datetime
 import difflib
 import functools
@@ -34,6 +35,28 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(logging.Formatter(
     '[%(levelname)s] %(name)s (%(filename)s) - %(message)s'))
 logger.addHandler(handler)
+
+
+_settings = {}
+
+
+def get_settings():
+    return _settings
+
+
+def set_settings(settings):
+    global _settings
+    _settings = settings
+
+
+@contextmanager
+def super_user():
+    settings = get_settings()
+    super_user = settings.get('super_user', 'postgres')
+    with psycopg2.connect(settings['db_connection_string'],
+                          user=super_user) as db_conn:
+        with db_conn.cursor() as cursor:
+            yield cursor
 
 
 # psycopg2 / libpq doesn't respond to SIGINT (ctrl-c):

@@ -43,6 +43,12 @@ def main(argv=sys.argv[1:]):
                         help='a psycopg2 db connection string')
 
     parser.add_argument(
+        '--super-user',
+        default='postgres',
+        help='postgres username for super user connections, defaults to '
+             '"postgres"')
+
+    parser.add_argument(
         '--context',
         action='append',
         default=[],
@@ -93,5 +99,6 @@ def main(argv=sys.argv[1:]):
         logger.setLevel(logging.DEBUG)
 
     logger.debug('args: {}'.format(args))
+    utils.set_settings(args)
 
     return args['cmmd'](**args)

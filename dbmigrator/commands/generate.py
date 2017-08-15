@@ -35,6 +35,11 @@ def up(cursor):
     # TODO migration code
     pass
 
+    # if a super user database connection is needed
+    # from dbmigrator import super_user
+    # with super_user() as super_cursor:
+    #     pass
+
 
 def down(cursor):
     # TODO rollback code
