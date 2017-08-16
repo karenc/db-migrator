@@ -217,18 +217,19 @@ class MarkTestCase(BaseTestCase):
         self.assertIn('20160228202637   add_table         True', stdout)
         self.assertIn('20160228212456   cool_stuff        True', stdout)
 
-    @mock.patch('dbmigrator.logger.error')
-    def test_migration_not_found(self, error):
+    def test_migration_not_found(self):
         testing.install_test_packages()
         cmd = ['--db-connection-string', testing.db_connection_string]
 
         self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
 
-        self.target(cmd + ['mark', '-t', '012345'])
-        error.assert_called_with('Migration 012345 not found')
+        with self.assertRaises(SystemExit) as cm:
+            self.target(cmd + ['mark', '-t', '012345'])
+        self.assertEqual('Migration 012345 not found', str(cm.exception))
 
-        self.target(cmd + ['mark', '-f', '012345'])
-        error.assert_called_with('Migration 012345 not found')
+        with self.assertRaises(SystemExit) as cm:
+            self.target(cmd + ['mark', '-f', '012345'])
+        self.assertEqual('Migration 012345 not found', str(cm.exception))
 
     def test_mark_as_false(self):
         testing.install_test_packages()

@@ -24,9 +24,8 @@ def cli_command(cursor, migrations_directory='', migration_timestamp='',
                       migrations_directory, import_modules=True)}
     migration = migrations.get(migration_timestamp)
     if migration is None:
-        logger.error(
+        raise SystemExit(
             'Migration {} not found'.format(migration_timestamp))
-        return
 
     utils.mark_migration(cursor, migration_timestamp, completed)
     if not completed:
