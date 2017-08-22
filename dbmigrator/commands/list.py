@@ -42,6 +42,8 @@ def cli_command(cursor, migrations_directory='', db_connection_string='',
             version, migration, migrated_versions)
         is_applied = deferred and 'deferred' or \
             bool(migrated_versions.get(version))
+        if hasattr(migration, 'should_run'):
+            is_applied = '{}*'.format(is_applied)
         print('{}   {}   {!s: <10}   {}'.format(
             version, name_format.format(migration_name[:name_width]),
             is_applied, migrated_versions.get(version) or ''))

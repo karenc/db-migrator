@@ -112,8 +112,11 @@ Example usage::
     version        | name            | is applied | date applied
     ----------------------------------------------------------------------
     20151217170514   add_id_to_users   True         2016-01-31 00:15:01.692570+01:00
-    20151218145832   add_karen_to_us   False               
-    20160107200351   blah              False               
+    20151218145832   add_karen_to_us   False*              
+    20160107200351   blah              deferred            
+
+A `*` in the "is applied" column means that the migration is a repeated
+migration.
 
 To see the full migration name, use ``--wide``::
 
@@ -121,8 +124,8 @@ To see the full migration name, use ``--wide``::
     version        | name               | is applied | date applied
     ----------------------------------------------------------------------
     20151217170514   add_id_to_users      True         2016-01-31 00:15:01.692570+01:00
-    20151218145832   add_karen_to_users   False               
-    20160107200351   blah                 False               
+    20151218145832   add_karen_to_users   False*              
+    20160107200351   blah                 deferred            
 
 
 migrate

@@ -353,7 +353,7 @@ SELECT 1 FROM information_schema.tables
             self.target(cmd + ['list'])
 
         stdout = out.getvalue()
-        self.assertIn('20170810124056   empty             deferred     20',
+        self.assertIn('20170810124056   empty             deferred*    20',
                       stdout)
 
         # mark a deferred migration as not not been run
@@ -679,7 +679,13 @@ SELECT table_name FROM information_schema.tables
         with testing.captured_output() as (out, err):
             self.target(cmd + ['migrate'])
 
-        self.target(cmd + ['list'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20170810093842   create_a_table    True ', stdout)
+        self.assertIn('20170810093943   repeat_insert_d   True*', stdout)
+        self.assertIn('20170810124056   empty             deferred*', stdout)
 
         # Version wise, the empty migration is more recent, but the repeat
         # migration is the last migration applied, so rollback should rollback
