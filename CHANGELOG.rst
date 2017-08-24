@@ -1,6 +1,21 @@
 CHANGELOG
 ---------
 
+1.0.0 (2017-08-24)
+------------------
+
+- Add "*" to indicate repeated migrations in ``list``
+- Raise SystemExit when ``mark`` migration not found
+- Add deferred migrations
+- Add repeat conditional migrations
+- Change print statement to logger.debug
+- Reduce noise in tests when installing test packages
+- Add CLI test for rollback
+- Add CLI test for migrate
+- Add super user database connections
+- Move logger from __init__.py to utils.py
+- Change python 3.4 to 3.5 in .travis.yml
+
 0.2.0 (2016-06-24)
 ------------------
 
