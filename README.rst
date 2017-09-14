@@ -136,6 +136,7 @@ Run pending migrations.
 For example, with two migrations in the migrations directory,
 
 ``migrations/20151217170514_add_id_to_users.py``::
+
     from dbmigrator import super_user
 
     def up(cursor):
