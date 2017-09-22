@@ -245,9 +245,12 @@ def run_migration(cursor, version, migration_name, migration,
             return
 
     try:
+        cursor.execute('SAVEPOINT pre_should_run')
         if not migration.should_run(cursor):
             print('Skipping migration {} {}: should_run is false'
                   .format(version, migration_name))
+            cursor.execute('ROLLBACK TO pre_should_run')
+            cursor.execute('RELEASE SAVEPOINT pre_should_run')
             return
     except AttributeError:
         # not a repeat migration
