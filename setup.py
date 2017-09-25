@@ -6,6 +6,8 @@
 # See LICENCE.txt for details.
 # ###
 
+import os
+import re
 import sys
 from setuptools import setup, find_packages
 
@@ -19,12 +21,27 @@ tests_require = [
 if sys.version_info.major < 3:
     tests_require.append('mock')
 
-LONG_DESC = '\n\n~~~~\n\n'.join([open('README.rst').read(),
-                                 open('CHANGELOG.rst').read()])
+here = os.path.dirname(__file__)
+
+
+def read(path):
+    with open(os.path.join(here, path)) as f:
+        return f.read()
+
+
+def find_version(path):
+    m = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                  read(path), re.MULTILINE)
+    if m:
+        return m.group(1)
+    raise RuntimeError('Unable to find version string')
+
+LONG_DESC = '\n\n~~~~\n\n'.join([read('README.rst'),
+                                 read('CHANGELOG.rst')])
 
 setup(
     name='db-migrator',
-    version='1.0.1',
+    version=find_version('dbmigrator/__init__.py'),
     author='Connexions',
     author_email='info@cnx.org',
     url='https://github.com/karenc/db-migrator',
