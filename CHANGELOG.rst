@@ -1,6 +1,12 @@
 CHANGELOG
 ---------
 
+1.0.2 (2017-09-25)
+------------------
+
+- create a savepoint around should_run - rollback on false, to restore db state
+- Add ``__version__`` to dbmigrator
+
 1.0.1 (2017-09-14)
 ------------------
 
