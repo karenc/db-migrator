@@ -230,7 +230,7 @@ def compare_schema(db_connection_string, callback, *args, **kwargs):
     print(''.join(list(
         difflib.unified_diff(old_schema.splitlines(True),
                              new_schema.splitlines(True),
-                             n=10))).encode('utf-8'))
+                             n=10))).encode('utf-8').decode('utf-8'))
 
 
 def run_migration(cursor, version, migration_name, migration,
