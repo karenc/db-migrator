@@ -18,11 +18,12 @@ except ImportError:
 import psycopg2
 
 from . import testing
+from ..utils import db_connect
 
 
 class UtilsTestCase(unittest.TestCase):
     def setUp(self):
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""
 CREATE TABLE schema_migrations (
@@ -31,7 +32,7 @@ CREATE TABLE schema_migrations (
 )""")
 
     def tearDown(self):
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('DROP TABLE IF EXISTS a_table')
                 cursor.execute('DROP TABLE IF EXISTS schema_migrations')
@@ -40,14 +41,14 @@ CREATE TABLE schema_migrations (
         from ..utils import super_user, with_cursor
 
         def cleanup():
-            with psycopg2.connect(testing.db_connection_string,
-                                  user='postgres') as db_conn:
+            with db_connect(testing.db_connection_string,
+                            user='postgres') as db_conn:
                 with db_conn.cursor() as cursor:
                     cursor.execute('DROP TABLE IF EXISTS super_table')
 
         self.addCleanup(cleanup)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('SELECT current_user')
                 self.assertEqual('travis', cursor.fetchone()[0])
@@ -141,7 +142,7 @@ CREATE TABLE schema_migrations (
         self.assertIn('up', dir(migration))
         self.assertIn('down', dir(migration))
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 try:
                     cursor.execute('SELECT * FROM a_table')
@@ -150,7 +151,7 @@ CREATE TABLE schema_migrations (
                 except psycopg2.ProgrammingError as e:
                     self.assertIn('relation "a_table" does not exist', str(e))
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 # Run the migration.
                 migration.up(cursor)
@@ -161,7 +162,7 @@ CREATE TABLE schema_migrations (
                 # Roll back the migration.
                 migration.down(cursor)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 try:
                     cursor.execute('SELECT * FROM a_table')
@@ -191,7 +192,7 @@ CREATE TABLE schema_migrations (
     def test_get_pending_migrations(self):
         from ..utils import get_pending_migrations
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 migrations = list(get_pending_migrations(
                     testing.test_migrations_directories, cursor))
@@ -204,7 +205,7 @@ CREATE TABLE schema_migrations (
     def test_run_migration(self):
         from ..utils import run_migration, get_pending_migrations
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 migrations = list(get_pending_migrations(
                     testing.test_migrations_directories, cursor,
@@ -228,7 +229,7 @@ CREATE TABLE schema_migrations (
         from ..utils import (
             rollback_migration, run_migration, get_pending_migrations)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 migrations = list(get_pending_migrations(
                     testing.test_migrations_directories, cursor,

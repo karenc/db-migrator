@@ -50,11 +50,21 @@ def set_settings(settings):
 
 
 @contextmanager
+def db_connect(*args, **kwargs):
+    db_conn = psycopg2.connect(*args, **kwargs)
+    try:
+        with db_conn:
+            yield db_conn
+    finally:
+        db_conn.close()
+
+
+@contextmanager
 def super_user():
     settings = get_settings()
     super_user = settings.get('super_user', 'postgres')
-    with psycopg2.connect(settings['db_connection_string'],
-                          user=super_user) as db_conn:
+    with db_connect(settings['db_connection_string'],
+                    user=super_user) as db_conn:
         with db_conn.cursor() as cursor:
             yield cursor
 
@@ -140,7 +150,7 @@ def with_cursor(func):
         if not kwargs.get('db_connection_string'):
             raise Exception('db-connection-string missing')
         db_conn_str = kwargs.get('db_connection_string')
-        with psycopg2.connect(db_conn_str) as db_conn:
+        with db_connect(db_conn_str) as db_conn:
             with db_conn.cursor() as cursor:
                 return func(cursor, *args, **kwargs)
     return wrapper

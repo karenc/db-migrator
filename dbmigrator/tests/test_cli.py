@@ -17,9 +17,9 @@ except ImportError:
     import mock
 
 import pkg_resources
-import psycopg2
 
 from . import testing
+from ..utils import db_connect
 
 
 class BaseTestCase(unittest.TestCase):
@@ -29,7 +29,7 @@ class BaseTestCase(unittest.TestCase):
         return main
 
     def tearDown(self):
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('DROP TABLE IF EXISTS schema_migrations')
 
@@ -300,7 +300,7 @@ class MarkTestCase(BaseTestCase):
         self.target(cmd + ['--context', 'package-a', 'migrate'])
 
         # check that the table is not created by the migration
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""\
 SELECT 1 FROM information_schema.tables
@@ -449,7 +449,7 @@ class MigrateTestCase(BaseTestCase):
         cmd = ['--db-connection-string', testing.db_connection_string]
 
         def cleanup():
-            with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_connect(testing.db_connection_string) as db_conn:
                 with db_conn.cursor() as cursor:
                     cursor.execute('DROP TABLE IF EXISTS a_table')
 
@@ -462,7 +462,7 @@ class MigrateTestCase(BaseTestCase):
         stdout = out.getvalue()
         self.assertIn('+CREATE TABLE a_table', stdout)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""\
                     SELECT table_name FROM information_schema.tables
@@ -477,7 +477,7 @@ class MigrateTestCase(BaseTestCase):
         def cleanup():
             if os.path.exists('insert_data.txt'):
                 os.remove('insert_data.txt')
-            with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_connect(testing.db_connection_string) as db_conn:
                 with db_conn.cursor() as cursor:
                     cursor.execute('DROP TABLE IF EXISTS a_table')
 
@@ -508,7 +508,7 @@ class MigrateTestCase(BaseTestCase):
         self.assertIn('Running migration 20170810093943', stdout)
 
         # Make sure data has been inserted twice
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('SELECT name FROM a_table')
                 self.assertEqual([('三好',), ('三好',)],
@@ -533,7 +533,7 @@ class MigrateTestCase(BaseTestCase):
         def cleanup():
             if os.path.exists('insert_data.txt'):
                 os.remove('insert_data.txt')
-            with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_connect(testing.db_connection_string) as db_conn:
                 with db_conn.cursor() as cursor:
                     cursor.execute('DROP TABLE IF EXISTS a_table')
 
@@ -586,7 +586,7 @@ class RollbackTestCase(BaseTestCase):
                '--context', 'package-a']
 
         def cleanup():
-            with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_connect(testing.db_connection_string) as db_conn:
                 with db_conn.cursor() as cursor:
                     cursor.execute('DROP TABLE IF EXISTS a_table')
             path = os.path.join(
@@ -610,7 +610,7 @@ class RollbackTestCase(BaseTestCase):
         stdout = out.getvalue()
         self.assertIn('Rolling back migration 20160228212456', stdout)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""\
 SELECT table_name FROM information_schema.tables
@@ -623,7 +623,7 @@ SELECT table_name FROM information_schema.tables
         stdout = out.getvalue()
         self.assertIn('Rolling back migration 20160228202637', stdout)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""\
 SELECT table_name FROM information_schema.tables
@@ -641,7 +641,7 @@ SELECT table_name FROM information_schema.tables
         self.assertIn('Rolling back migration 20160228212456', stdout)
         self.assertIn('Rolling back migration 20160228202637', stdout)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""\
 SELECT table_name FROM information_schema.tables
@@ -656,7 +656,7 @@ SELECT table_name FROM information_schema.tables
         def cleanup():
             if os.path.exists('insert_data.txt'):
                 os.remove('insert_data.txt')
-            with psycopg2.connect(testing.db_connection_string) as db_conn:
+            with db_connect(testing.db_connection_string) as db_conn:
                 with db_conn.cursor() as cursor:
                     cursor.execute('DROP TABLE IF EXISTS a_table')
 
@@ -695,7 +695,7 @@ SELECT table_name FROM information_schema.tables
         stdout = out.getvalue()
         self.assertIn('Rolling back migration 20170810093943', stdout)
 
-        with psycopg2.connect(testing.db_connection_string) as db_conn:
+        with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute('SELECT name FROM a_table')
                 self.assertEqual([('三好',)], cursor.fetchall())
