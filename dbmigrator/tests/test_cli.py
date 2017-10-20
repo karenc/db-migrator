@@ -172,6 +172,30 @@ version        | name       | is applied | date applied
 \n""", stdout)
         self.assertEqual('', stderr)
 
+    def test_sort_applied(self):
+        testing.install_test_packages()
+
+        cmd = ['--db-connection-string', testing.db_connection_string]
+        self.target(cmd + ['init'])
+        self.target(cmd + ['--context', 'package-a',
+                           'mark', '-t', '20160228212456'])
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list',
+                               '--sort=applied'])
+
+        stdout = out.getvalue()
+        stderr = err.getvalue()
+
+        applied_timestamp = ' '.join(stdout.split()[13:15])
+        self.assertEqual("""\
+version        | name            | is applied | date applied
+----------------------------------------------------------------------
+20160228212456   cool_stuff        True         {}
+20160228202637   add_table         False        \
+\n""".format(applied_timestamp), stdout)
+
+        self.assertEqual('', stderr)
+
 
 class InitTestCase(BaseTestCase):
     def test_multiple_contexts(self):

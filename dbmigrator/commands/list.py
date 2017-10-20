@@ -16,7 +16,7 @@ __all__ = ('cli_loader',)
 
 @utils.with_cursor
 def cli_command(cursor, migrations_directory='', db_connection_string='',
-                wide=False, **kwargs):
+                wide=False, sort='version', **kwargs):
     # version -> applied timestamp
     migrated_versions = dict(list(
         utils.get_schema_versions(cursor, versions_only=False,
@@ -35,22 +35,29 @@ def cli_command(cursor, migrations_directory='', db_connection_string='',
           .format(name_format.format('name')))
     print('-' * 70)
 
+    migrations = [(version, migration_name, migration,
+                   migrated_versions.get(version, ''))
+                  for version, migration_name, migration in migrations]
+    if sort == 'applied':
+        migrations.sort(key=lambda a: str(a[-1]) or 'None')
+
     name_format = '{: <%s}' % (name_width,)
-    for version, migration_name, migration in migrations:
-        applied_timestamp = migrated_versions.get(version, '')
+    for version, migration_name, migration, applied_timestamp in migrations:
         deferred = utils.is_deferred(
             version, migration, migrated_versions)
-        is_applied = deferred and 'deferred' or \
-            bool(migrated_versions.get(version))
+        is_applied = deferred and 'deferred' or bool(applied_timestamp)
         if hasattr(migration, 'should_run'):
             is_applied = '{}*'.format(is_applied)
         print('{}   {}   {!s: <10}   {}'.format(
             version, name_format.format(migration_name[:name_width]),
-            is_applied, migrated_versions.get(version) or ''))
+            is_applied, applied_timestamp))
 
 
 def cli_loader(parser):
     parser.add_argument('--wide', action='store_true',
                         dest='wide', default=False,
                         help='Display the full name of every migration')
+    parser.add_argument(
+        '--sort', default='version', choices=['version', 'applied'],
+        help='Sort by migration "version" (default), or "applied" dates')
     return cli_command
