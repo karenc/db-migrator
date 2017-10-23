@@ -74,9 +74,8 @@ def main(argv=sys.argv[1:]):
 
     if not args.get('context') and not args.get('migrations_directory'):
         args['context'] = [os.path.basename(os.path.abspath(os.path.curdir))]
-        print('context undefined, using current directory name "{}"'
-              .format(args['context']),
-              file=sys.stderr)
+        logger.warning('context undefined, using current directory name "{}"'
+                       .format(args['context']))
     utils.get_settings_from_entry_points(args, args['context'])
 
     for name, value in DEFAULTS.items():
@@ -93,7 +92,7 @@ def main(argv=sys.argv[1:]):
         args['migrations_directory'] = [
             os.path.relpath(md) for md in args['migrations_directory']]
     else:
-        print('migrations directory undefined', file=sys.stderr)
+        logger.warning('migrations directory undefined')
 
     if args.get('verbose'):
         logger.setLevel(logging.DEBUG)

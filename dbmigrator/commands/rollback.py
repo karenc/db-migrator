@@ -20,7 +20,7 @@ def cli_command(cursor, migrations_directory='', steps=1,
         cursor, include_deferred=False, order_by='applied'))
     logger.debug('migrated_versions: {}'.format(migrated_versions))
     if not migrated_versions:
-        print('No migrations to roll back.')
+        logger.info('No migrations to roll back.')
         return
     migrations = {version: (name, migration)
                   for version, name, migration in utils.get_migrations(
@@ -30,7 +30,7 @@ def cli_command(cursor, migrations_directory='', steps=1,
     rolled_back = 0
     for version in reversed(migrated_versions):
         if version not in migrations:
-            print('Migration {} not found.'.format(version))
+            logger.info('Migration {} not found.'.format(version))
             break
         migration_name, migration = migrations[version]
         utils.compare_schema(db_connection_string,
@@ -44,7 +44,7 @@ def cli_command(cursor, migrations_directory='', steps=1,
             break
 
     if not rolled_back:
-        print('No migrations to roll back.')
+        logger.info('No migrations to roll back.')
 
 
 def cli_loader(parser):

@@ -6,6 +6,7 @@
 # See LICENCE.txt for details.
 # ###
 
+import logging
 import os
 import shutil
 import sys
@@ -22,11 +23,33 @@ from . import testing
 from ..utils import db_connect
 
 
+logger = mock.Mock()
+
+
+def logger_args(method='info'):
+    result = ''
+    for s in getattr(logger, method).call_args_list:
+        try:
+            result += s[0][0].decode('utf-8')
+        except (UnicodeEncodeError, AttributeError):
+            result += s[0][0]
+    return result
+
+
 class BaseTestCase(unittest.TestCase):
     @property
     def target(self):
         from ..cli import main
         return main
+
+    def setUp(self):
+        import dbmigrator
+        _logger = dbmigrator.logger
+        self.addCleanup(setattr, dbmigrator, 'logger', _logger)
+        self.addCleanup(setattr, dbmigrator.utils, 'logger', _logger)
+        dbmigrator.logger = logger
+        dbmigrator.utils.logger = logger
+        logger.reset_mock()
 
     def tearDown(self):
         with db_connect(testing.db_connection_string) as db_conn:
@@ -50,21 +73,16 @@ class VersionTestCase(BaseTestCase):
 
 
 class VerboseTestCase(BaseTestCase):
-    @mock.patch('dbmigrator.logger.debug')
-    def test(self, debug):
-        from .. import logger
+    def test(self):
+        self.target(['-v', '--config', testing.test_config_path, 'init'])
 
-        with testing.captured_output() as (out, err):
-            self.target(['-v', '--config', testing.test_config_path, 'init'])
+        logger.setLevel.assert_called_with(logging.DEBUG)
 
-        stdout = out.getvalue()
-        stderr = err.getvalue()
+        self.assertEqual(1, logger.debug.call_count)
+        self.assertTrue(
+            logger.debug.call_args[0][0].startswith('args: {'))
 
-        self.assertEqual(1, debug.call_count)
-        self.assertTrue(debug.call_args[0][0].startswith('args: {'))
-
-        self.assertEqual('Schema migrations initialized.\n', stdout)
-        self.assertEqual('', stderr)
+        logger.info.assert_called_with('Schema migrations initialized.')
 
 
 class ListTestCase(BaseTestCase):
@@ -80,12 +98,15 @@ class ListTestCase(BaseTestCase):
         self.assertEqual(stdout, """\
 version        | name            | is applied | date applied
 ----------------------------------------------------------------------\n""")
-        self.assertEqual(stderr, """\
-context undefined, using current directory name "['db-migrator']"
-migrations directory undefined\n""")
+        self.assertEqual(stderr, '')
+        logger.info.assert_called_with('Schema migrations initialized.')
+        logger.warning.assert_any_call("""\
+context undefined, using current directory name "['db-migrator']"\
+""")
+        logger.warning.assert_any_call(
+            'migrations directory undefined')
 
-    @mock.patch('dbmigrator.logger.warning')
-    def test_no_table(self, warning):
+    def test_no_table(self):
         cmd = ['--config', testing.test_config_path]
         with testing.captured_output() as (out, err):
             self.target(cmd + ['list'])
@@ -98,7 +119,7 @@ version        | name            | is applied | date applied
 ----------------------------------------------------------------------\n""",
                          stdout)
 
-        warning.assert_called_with(
+        logger.warning.assert_called_with(
             'You may need to create the schema_migrations table: '
             'dbmigrator init --help')
         self.assertEqual('', stderr)
@@ -180,14 +201,11 @@ class MarkTestCase(BaseTestCase):
         cmd = ['--db-connection-string', testing.db_connection_string]
 
         self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+        self.target(cmd + ['--context', 'package-a',
+                           'mark', '-t', '20160228212456'])
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['--context', 'package-a',
-                               'mark', '-t', '20160228212456'])
-
-        stdout = out.getvalue()
-        self.assertEqual('Migration 20160228212456 marked as completed\n',
-                         stdout)
+        logger.info.assert_called_with(
+            'Migration 20160228212456 marked as completed')
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['--context', 'package-a', 'list'])
@@ -202,13 +220,11 @@ class MarkTestCase(BaseTestCase):
 
         self.target(cmd + ['--context', 'package-a', 'init'])
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['--context', 'package-a',
-                               'mark', '-t', '20160228212456'])
+        self.target(cmd + ['--context', 'package-a',
+                           'mark', '-t', '20160228212456'])
 
-        stdout = out.getvalue()
-        self.assertEqual('Migration 20160228212456 marked as completed\n',
-                         stdout)
+        logger.info.assert_called_with(
+            'Migration 20160228212456 marked as completed')
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['--context', 'package-a', 'list'])
@@ -238,12 +254,11 @@ class MarkTestCase(BaseTestCase):
 
         self.target(cmd + ['init'])
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['mark', '-f', '20160228202637'])
+        self.target(cmd + ['mark', '-f', '20160228202637'])
 
-        stdout = out.getvalue()
-        self.assertIn('Migration 20160228202637 marked as not been run',
-                      stdout)
+        self.assertTrue(
+            logger.info.call_args[0][0].startswith(
+                'Migration 20160228202637 marked as not been run'))
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['list'])
@@ -258,13 +273,12 @@ class MarkTestCase(BaseTestCase):
 
         self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['--context', 'package-a', 'mark', '-f',
-                               '20160228202637'])
+        self.target(cmd + ['--context', 'package-a', 'mark', '-f',
+                           '20160228202637'])
 
-        stdout = out.getvalue()
-        self.assertIn('Migration 20160228202637 marked as not been run',
-                      stdout)
+        self.assertTrue(
+            logger.info.call_args[0][0].startswith(
+                'Migration 20160228202637 marked as not been run'))
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['--context', 'package-a', 'list'])
@@ -280,13 +294,11 @@ class MarkTestCase(BaseTestCase):
         self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
 
         # mark migration as deferred
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['--context', 'package-a', 'mark', '-d',
-                               '20160228202637'])
+        self.target(cmd + ['--context', 'package-a', 'mark', '-d',
+                           '20160228202637'])
 
-        stdout = out.getvalue()
-        self.assertEqual('Migration 20160228202637 marked as deferred\n',
-                         stdout)
+        logger.info.assert_called_with(
+            'Migration 20160228202637 marked as deferred')
 
         # check list output
         with testing.captured_output() as (out, err):
@@ -342,12 +354,10 @@ SELECT 1 FROM information_schema.tables
         self.assertIn('20170810124056   empty             deferred', stdout)
 
         # mark a deferred migration as completed
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['mark', '-t', '20170810124056'])
+        self.target(cmd + ['mark', '-t', '20170810124056'])
 
-        stdout = out.getvalue()
-        self.assertEqual('Migration 20170810124056 marked as completed\n',
-                         stdout)
+        logger.info.assert_called_with(
+            'Migration 20170810124056 marked as completed')
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['list'])
@@ -357,12 +367,11 @@ SELECT 1 FROM information_schema.tables
                       stdout)
 
         # mark a deferred migration as not not been run
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['mark', '-f', '20170810124056'])
+        self.target(cmd + ['mark', '-f', '20170810124056'])
 
-        stdout = out.getvalue()
-        self.assertIn('Migration 20170810124056 marked as not been run',
-                      stdout)
+        self.assertTrue(
+            logger.info.call_args[0][0].startswith(
+                'Migration 20170810124056 marked as not been run'))
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['list'])
@@ -386,18 +395,11 @@ class GenerateTestCase(BaseTestCase):
 
         testing.install_test_packages()
 
-        with testing.captured_output() as (out, err):
-            self.target(['--context', 'package-a', 'generate',
-                         'a_new_migration'])
+        self.target(['--context', 'package-a', 'generate', 'a_new_migration'])
 
-        stdout = out.getvalue()
-        stderr = err.getvalue()
-
-        self.assertEqual(
+        logger.info.assert_called_with(
             'Generated migration script "dbmigrator/tests/data/package-a/'
-            'package_a/migrations/{}"\n'.format(filename),
-            stdout)
-        self.assertEqual('', stderr)
+            'package_a/migrations/{}"'.format(filename))
 
         self.assertTrue(os.path.exists(expected_path))
 
@@ -456,11 +458,9 @@ class MigrateTestCase(BaseTestCase):
         self.addCleanup(cleanup)
 
         self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['--context', 'package-a', 'migrate'])
+        self.target(cmd + ['--context', 'package-a', 'migrate'])
 
-        stdout = out.getvalue()
-        self.assertIn('+CREATE TABLE a_table', stdout)
+        self.assertIn('+CREATE TABLE a_table', logger_args())
 
         with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
@@ -484,28 +484,26 @@ class MigrateTestCase(BaseTestCase):
         self.addCleanup(cleanup)
 
         self.target(cmd + ['init', '--version', '0'])
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
-        stdout = out.getvalue()
-        self.assertIn('+CREATE TABLE a_table', stdout)
-        self.assertIn('Skipping migration 20170810093943', stdout)
+        info = logger_args()
+        self.assertIn('+CREATE TABLE a_table', info)
+        self.assertIn('Skipping migration 20170810093943', info)
+        logger.reset_mock()
 
         # Run the repeat migration by creating this file
         with open('insert_data.txt', 'w') as f:
             f.write('三好')
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
-        stdout = out.getvalue()
-        self.assertIn('Running migration 20170810093943', stdout)
+        self.assertIn('Running migration 20170810093943', logger_args())
+        logger.reset_mock()
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
-        stdout = out.getvalue()
-        self.assertIn('Running migration 20170810093943', stdout)
+        self.assertIn('Running migration 20170810093943', logger_args())
+        logger.reset_mock()
 
         # Make sure data has been inserted twice
         with db_connect(testing.db_connection_string) as db_conn:
@@ -518,12 +516,10 @@ class MigrateTestCase(BaseTestCase):
         self.target(cmd + ['mark', '-d', '20170810093943'])
 
         # The deferred repeat migration should not run
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
-        stdout = out.getvalue()
         self.assertIn('Skipping deferred migration 20170810124056 empty',
-                      stdout)
+                      logger_args())
 
     def test_deferred(self):
         md = os.path.join(testing.test_data_path, 'md')
@@ -540,40 +536,37 @@ class MigrateTestCase(BaseTestCase):
         self.addCleanup(cleanup)
 
         self.target(cmd + ['init', '--version', '0'])
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
-        stdout = out.getvalue()
-        self.assertIn('+CREATE TABLE a_table', stdout)
+        info = logger_args()
+        self.assertIn('+CREATE TABLE a_table', info)
         self.assertIn('Skipping deferred migration 20170810124056 empty',
-                      stdout)
+                      info)
+        logger.reset_mock()
 
         # Run the repeat migration by creating this file
         with open('insert_data.txt', 'w') as f:
             f.write('三好')
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
-        stdout = out.getvalue()
-        self.assertIn('Running migration 20170810093943', stdout)
+        self.assertIn('Running migration 20170810093943', logger_args())
+        logger.reset_mock()
 
         # Mark the deferred migration as not not been run
         self.target(cmd + ['mark', '-f', '20170810124056'])
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate', '--run-deferred'])
-        stdout = out.getvalue()
-        self.assertIn('Running migration 20170810124056', stdout)
+        self.target(cmd + ['migrate', '--run-deferred'])
+
+        self.assertIn('Running migration 20170810124056', logger_args())
+        logger.reset_mock()
 
         # Mark the deferable as deferred
         self.target(cmd + ['mark', '-d', '20170810124056'])
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate', '--run-deferred'])
+        self.target(cmd + ['migrate', '--run-deferred'])
 
-        stdout = out.getvalue()
-        self.assertIn('Running migration 20170810124056', stdout)
+        self.assertIn('Running migration 20170810124056', logger_args())
 
 
 class RollbackTestCase(BaseTestCase):
@@ -598,17 +591,15 @@ class RollbackTestCase(BaseTestCase):
         self.addCleanup(cleanup)
 
         self.target(cmd + ['init', '--version', '0'])
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
         # Generate a new migration that is not yet run
         self.target(cmd + ['generate', 'new_one'])
 
         # Rollback once, the table should still be there
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['rollback'])
-        stdout = out.getvalue()
-        self.assertIn('Rolling back migration 20160228212456', stdout)
+        self.target(cmd + ['rollback'])
+        self.assertIn('Rolling back migration 20160228212456', logger_args())
+        logger.reset_mock()
 
         with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
@@ -618,10 +609,9 @@ SELECT table_name FROM information_schema.tables
                 self.assertEqual('a_table', cursor.fetchone()[0])
 
         # Rollback the migration that created the table
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['rollback'])
-        stdout = out.getvalue()
-        self.assertIn('Rolling back migration 20160228202637', stdout)
+        self.target(cmd + ['rollback'])
+        self.assertIn('Rolling back migration 20160228202637', logger_args())
+        logger.reset_mock()
 
         with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
@@ -631,15 +621,13 @@ SELECT table_name FROM information_schema.tables
                 self.assertEqual(None, cursor.fetchone())
 
         # Migrate again
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
         # Rollback three migrations
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['rollback', '--steps', '3'])
-        stdout = out.getvalue()
-        self.assertIn('Rolling back migration 20160228212456', stdout)
-        self.assertIn('Rolling back migration 20160228202637', stdout)
+        self.target(cmd + ['rollback', '--steps', '3'])
+        info = logger_args()
+        self.assertIn('Rolling back migration 20160228212456', info)
+        self.assertIn('Rolling back migration 20160228202637', info)
 
         with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
@@ -663,21 +651,18 @@ SELECT table_name FROM information_schema.tables
         self.addCleanup(cleanup)
 
         self.target(cmd + ['init', '--version', '0'])
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate', '--run-deferred'])
+        self.target(cmd + ['migrate', '--run-deferred'])
 
         # Run the repeat migration by creating this file
         with open('insert_data.txt', 'w') as f:
             f.write('三好')
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
         with open('insert_data.txt', 'w') as f:
             f.write('ジョーカーゲーム')
 
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['migrate'])
+        self.target(cmd + ['migrate'])
 
         with testing.captured_output() as (out, err):
             self.target(cmd + ['list'])
@@ -690,10 +675,9 @@ SELECT table_name FROM information_schema.tables
         # Version wise, the empty migration is more recent, but the repeat
         # migration is the last migration applied, so rollback should rollback
         # the repeat migration.
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['rollback'])
-        stdout = out.getvalue()
-        self.assertIn('Rolling back migration 20170810093943', stdout)
+        logger.reset_mock()
+        self.target(cmd + ['rollback'])
+        self.assertIn('Rolling back migration 20170810093943', logger_args())
 
         with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
@@ -701,7 +685,6 @@ SELECT table_name FROM information_schema.tables
                 self.assertEqual([('三好',)], cursor.fetchall())
 
         # Next, rollback the empty migration
-        with testing.captured_output() as (out, err):
-            self.target(cmd + ['rollback'])
-        stdout = out.getvalue()
-        self.assertIn('Rolling back migration 20170810124056', stdout)
+        logger.reset_mock()
+        self.target(cmd + ['rollback'])
+        self.assertIn('Rolling back migration 20170810124056', logger_args())

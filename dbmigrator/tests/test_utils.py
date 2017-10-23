@@ -21,8 +21,15 @@ from . import testing
 from ..utils import db_connect
 
 
+logger = mock.Mock()
+
+
 class UtilsTestCase(unittest.TestCase):
     def setUp(self):
+        import dbmigrator
+        _logger = dbmigrator.utils.logger
+        self.addCleanup(setattr, dbmigrator.utils, 'logger', _logger)
+        dbmigrator.utils.logger = logger
         with db_connect(testing.db_connection_string) as db_conn:
             with db_conn.cursor() as cursor:
                 cursor.execute("""
@@ -212,16 +219,13 @@ CREATE TABLE schema_migrations (
                     import_modules=True))
                 version, name, migration = list(migrations)[0]
 
-                with testing.captured_output() as (out, err):
-                    run_migration(cursor, version, name, migration)
+                run_migration(cursor, version, name, migration)
 
                 after_migrations = list(get_pending_migrations(
                     testing.test_migrations_directories, cursor))
 
-        stdout = out.getvalue()
-
-        self.assertEqual(
-            stdout, 'Running migration {} {}\n'.format(version, name))
+        logger.info.assert_called_with(
+            'Running migration {} {}'.format(version, name))
 
         self.assertNotIn((version, name), after_migrations)
 
@@ -238,16 +242,13 @@ CREATE TABLE schema_migrations (
 
                 run_migration(cursor, version, name, migration)
 
-                with testing.captured_output() as (out, err):
-                    rollback_migration(cursor, version, name, migration)
+                rollback_migration(cursor, version, name, migration)
 
                 after_migrations = list(get_pending_migrations(
                     testing.test_migrations_directories, cursor))
 
-        stdout = out.getvalue()
-
-        self.assertEqual(
-            stdout, 'Rolling back migration {} {}\n'.format(version, name))
+        logger.info.assert_called_with(
+            'Rolling back migration {} {}'.format(version, name))
 
         self.assertIn((version, name), after_migrations)
 

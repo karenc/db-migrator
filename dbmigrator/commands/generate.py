@@ -10,6 +10,7 @@
 import os
 
 from ..utils import timestamp
+from .. import logger
 
 
 __all__ = ('cli_loader',)
@@ -50,7 +51,7 @@ def down(cursor):
     # TODO rollback code
     pass
 """)
-    print('Generated migration script "{}"'.format(path))
+    logger.info('Generated migration script "{}"'.format(path))
 
 
 def cli_loader(parser):

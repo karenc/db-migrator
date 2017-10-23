@@ -7,7 +7,7 @@
 # ###
 """Run all pending migrations."""
 
-from .. import utils
+from .. import logger, utils
 
 
 __all__ = ('cli_loader',)
@@ -32,7 +32,7 @@ def cli_command(cursor, migrations_directory='', version='',
                              run_deferred)
 
     if not migrated:
-        print('No pending migrations.  Database is up to date.')
+        logger.info('No pending migrations.  Database is up to date.')
 
 
 def cli_loader(parser):

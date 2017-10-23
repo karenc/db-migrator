@@ -34,7 +34,8 @@ def cli_command(cursor, migrations_directory='', migration_timestamp='',
         message = 'deferred'
     else:
         message = 'completed'
-    print('Migration {} marked as {}'.format(migration_timestamp, message))
+    logger.info('Migration {} marked as {}'.format(migration_timestamp,
+                                                   message))
 
 
 def cli_loader(parser):

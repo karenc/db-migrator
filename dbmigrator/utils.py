@@ -237,7 +237,7 @@ def compare_schema(db_connection_string, callback, *args, **kwargs):
     callback(*args, **kwargs)
     new_schema = subprocess.check_output(
         ['pg_dump', '-s', db_connection_string]).decode('utf-8')
-    print(''.join(list(
+    logger.info(''.join(list(
         difflib.unified_diff(old_schema.splitlines(True),
                              new_schema.splitlines(True),
                              n=10))).encode('utf-8'))
@@ -250,15 +250,15 @@ def run_migration(cursor, version, migration_name, migration,
             get_schema_versions(cursor, versions_only=False,
                                 raise_error=False)))
         if is_deferred(version, migration, migrated_versions):
-            print('Skipping deferred migration {} {}'
-                  .format(version, migration_name))
+            logger.info('Skipping deferred migration {} {}'
+                        .format(version, migration_name))
             return
 
     try:
         cursor.execute('SAVEPOINT pre_should_run')
         if not migration.should_run(cursor):
-            print('Skipping migration {} {}: should_run is false'
-                  .format(version, migration_name))
+            logger.info('Skipping migration {} {}: should_run is false'
+                        .format(version, migration_name))
             cursor.execute('ROLLBACK TO pre_should_run')
             cursor.execute('RELEASE SAVEPOINT pre_should_run')
             return
@@ -266,14 +266,14 @@ def run_migration(cursor, version, migration_name, migration,
         # not a repeat migration
         pass
 
-    print('Running migration {} {}'.format(version, migration_name))
+    logger.info('Running migration {} {}'.format(version, migration_name))
     migration.up(cursor)
     mark_migration(cursor, version, True)
     cursor.connection.commit()
 
 
 def rollback_migration(cursor, version, migration_name, migration):
-    print('Rolling back migration {} {}'.format(version, migration_name))
+    logger.info('Rolling back migration {} {}'.format(version, migration_name))
     migration.down(cursor)
     mark_migration(cursor, version, False)
     cursor.connection.commit()

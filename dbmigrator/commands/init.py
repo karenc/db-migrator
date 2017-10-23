@@ -7,7 +7,7 @@
 # ###
 """Initialize schema migrations table."""
 
-from .. import utils
+from .. import logger, utils
 
 
 __all__ = ('cli_loader',)
@@ -20,7 +20,7 @@ def cli_command(cursor, migrations_directory='', version=None, **kwargs):
         WHERE table_name = 'schema_migrations'""")
     table_exists = cursor.fetchone()
     if table_exists:
-        print('Schema migrations already initialized.')
+        logger.info('Schema migrations already initialized.')
         return
 
     cursor.execute("""\
@@ -39,7 +39,7 @@ def cli_command(cursor, migrations_directory='', version=None, **kwargs):
     cursor.executemany("""\
         INSERT INTO schema_migrations VALUES (%s)
         """, versions)
-    print('Schema migrations initialized.')
+    logger.info('Schema migrations initialized.')
 
 
 def cli_loader(parser):
