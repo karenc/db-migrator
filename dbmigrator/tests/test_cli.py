@@ -688,3 +688,27 @@ SELECT table_name FROM information_schema.tables
         logger.reset_mock()
         self.target(cmd + ['rollback'])
         self.assertIn('Rolling back migration 20170810124056', logger_args())
+
+    def test_no_migrations_to_rollback(self):
+        def cleanup():
+            with db_connect(testing.db_connection_string) as db_conn:
+                with db_conn.cursor() as cursor:
+                    cursor.execute('DROP TABLE IF EXISTS a_table')
+
+        self.addCleanup(cleanup)
+
+        md = os.path.join(testing.test_data_path, 'md')
+        cmd = ['--db-connection-string', testing.db_connection_string,
+               '--migrations-directory', md]
+
+        self.target(cmd + ['init', '--version=0'])
+        self.target(cmd + ['rollback'])
+
+        logger.info.assert_called_with('No migrations to roll back.')
+
+        self.target(cmd + ['migrate'])
+
+        logger.reset_mock()
+        self.target(cmd[:2] + ['--context=package-a', 'rollback'])
+        logger.info.assert_any_call('Migration 20170810093842 not found.')
+        logger.info.assert_called_with('No migrations to roll back.')
