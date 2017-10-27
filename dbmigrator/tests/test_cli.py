@@ -85,6 +85,13 @@ class VerboseTestCase(BaseTestCase):
         logger.info.assert_called_with('Schema migrations initialized.')
 
 
+class QuietTestCase(BaseTestCase):
+    def test(self):
+        self.target(['-q', '--config', testing.test_config_path, 'init'])
+
+        logger.setLevel.assert_called_with(logging.ERROR)
+
+
 class ListTestCase(BaseTestCase):
     def test_no_migrations_directory(self):
         cmd = ['--db-connection-string', testing.db_connection_string]

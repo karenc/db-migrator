@@ -32,6 +32,7 @@ def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='DB Migrator')
 
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--quiet', '-q', action='store_true')
 
     parser.add_argument('--migrations-directory',
                         action='append',
@@ -96,6 +97,9 @@ def main(argv=sys.argv[1:]):
 
     if args.get('verbose'):
         logger.setLevel(logging.DEBUG)
+
+    if args.get('quiet'):
+        logger.setLevel(logging.ERROR)
 
     logger.debug('args: {}'.format(args))
     utils.set_settings(args)
