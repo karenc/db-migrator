@@ -14,7 +14,7 @@ __all__ = ('cli_loader',)
 
 
 @utils.with_cursor
-def cli_command(cursor, migrations_directory='', migration_timestamp='',
+def cli_command(cursor, migrations_directory='', migration_timestamps=None,
                 completed=None, **kwargs):
     if completed is None:
         raise Exception('-t, -f or -d must be supplied.')
@@ -22,24 +22,26 @@ def cli_command(cursor, migrations_directory='', migration_timestamp='',
     migrations = {version: migration
                   for version, _, migration in utils.get_migrations(
                       migrations_directory, import_modules=True)}
-    migration = migrations.get(migration_timestamp)
-    if migration is None:
-        raise SystemExit(
-            'Migration {} not found'.format(migration_timestamp))
 
-    utils.mark_migration(cursor, migration_timestamp, completed)
-    if not completed:
-        message = 'not been run and not deferred'
-    elif completed == 'deferred':
-        message = 'deferred'
-    else:
-        message = 'completed'
-    logger.info('Migration {} marked as {}'.format(migration_timestamp,
-                                                   message))
+    for migration_timestamp in migration_timestamps:
+        migration = migrations.get(migration_timestamp)
+        if migration is None:
+            raise SystemExit(
+                'Migration {} not found'.format(migration_timestamp))
+
+        utils.mark_migration(cursor, migration_timestamp, completed)
+        if not completed:
+            message = 'not been run and not deferred'
+        elif completed == 'deferred':
+            message = 'deferred'
+        else:
+            message = 'completed'
+        logger.info('Migration {} marked as {}'.format(migration_timestamp,
+                                                       message))
 
 
 def cli_loader(parser):
-    parser.add_argument('migration_timestamp')
+    parser.add_argument('migration_timestamps', nargs='+')
     parser.add_argument('-t', action='store_const',
                         const=True,
                         dest='completed',

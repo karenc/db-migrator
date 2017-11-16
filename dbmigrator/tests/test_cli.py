@@ -192,6 +192,12 @@ class InitTestCase(BaseTestCase):
 
 
 class MarkTestCase(BaseTestCase):
+    def test_missing_version(self):
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        with self.assertRaises(SystemExit) as cm:
+            self.target(cmd + ['mark', '-t'])
+
     def test_missing_t_f_d_option(self):
         cmd = ['--db-connection-string', testing.db_connection_string]
 
@@ -219,6 +225,24 @@ class MarkTestCase(BaseTestCase):
 
         stdout = out.getvalue()
         self.assertIn('20160228202637   add_table         False', stdout)
+        self.assertIn('20160228212456   cool_stuff        True', stdout)
+
+    def test_mark_more_than_one(self):
+        testing.install_test_packages()
+        cmd = ['--db-connection-string', testing.db_connection_string]
+
+        self.target(cmd + ['--context', 'package-a', 'init', '--version', '0'])
+        self.target(cmd + ['--context', 'package-a',
+                           'mark', '-t', '20160228212456', '20160228202637'])
+
+        logger.info.assert_called_with(
+            'Migration 20160228202637 marked as completed')
+
+        with testing.captured_output() as (out, err):
+            self.target(cmd + ['--context', 'package-a', 'list'])
+
+        stdout = out.getvalue()
+        self.assertIn('20160228202637   add_table         True', stdout)
         self.assertIn('20160228212456   cool_stuff        True', stdout)
 
     def test_mark_as_true_already_true(self):
