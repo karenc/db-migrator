@@ -37,6 +37,9 @@ CREATE TABLE schema_migrations (
     version TEXT NOT NULL,
     applied TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 )""")
+        dbmigrator.utils.set_settings({
+            'db_connection_string': testing.db_connection_string,
+        })
 
     def tearDown(self):
         with db_connect(testing.db_connection_string) as db_conn:
