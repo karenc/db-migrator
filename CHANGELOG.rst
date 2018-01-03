@@ -1,6 +1,18 @@
 CHANGELOG
 ---------
 
+1.1.0 (2018-01-03)
+------------------
+
+- Add db-config-ini-key to CLI options
+- Add ``--sort`` (version or applied) to ``dbmigrator list``
+- Allow mark to accept multiple timestamps
+- Set dbmigrator settings before running utils tests
+- Add quiet switch
+- Add tests for no migrations to rollback
+- Convert most output to logging
+- Explicitly close all postgres db connections
+
 1.0.2 (2017-09-25)
 ------------------
 
